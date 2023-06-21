@@ -5,21 +5,14 @@ With access to supplementary datasets and computational power becoming more avai
 ## Instructors and Contact Information
 
 * Claire McKay Bowen, PhD (cbowen@urban.org)
+* Aaron R. Williams, MS (awilliams@urban.org)
 * Madeline Pickens, MS (mpickens@urban.org)
 
 ## Training Schedule
 
-8-8:15 Welcome, Introductions
-
-8:15-9:30 Part 1: Introduction to Data Privacy
-
-9:30-9:40 Break
-
-9:40 - 10:45 Part 2: Introduction to Synthetic Data
-
-10:45 - 11:10 Break, Exercises
-
-11:10 - 12 Part 3: Introduction to Differential Privacy
+* June 27, 2023: Introduction to Data Privacy and Synthetic Data
+* July 11, 2023: Disclosure Risk and Utility Metrics
+* July 25, 2023: Introduction to Differential Privacy
 
 Materials for each part can be found at the links below.
 
