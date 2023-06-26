@@ -205,7 +205,7 @@ create_table <- function(data_df,
 
 # General Utility Metrics
 
--   As a refresher, general utility metrics measure the distributional similarity (i.e. all statistical properties) between the original and synthetic data.
+-   As a refresher, general utility metrics measure the distributional similarity (i.e., all statistical properties) between the original and synthetic data.
 
 -   Also known as "broad" or "global" utility because they compare wider aspects of the differences between synthetic and confidential data, often in the form of one summary metric.
 
@@ -252,7 +252,7 @@ compare_penguins %>%
 
 **Discriminant based methods**: Can a model distinguish (i.e. discriminate) between records from the actual vs synthetic data?
 
--   Basic idea is to take the confidential data, smush it together with the synthetic data, and see if a model can distinguish (i.e. discriminate) between the two!
+-   Basic idea is to take the confidential data and combine with the synthetic data, and see if a model can distinguish (i.e., discriminate) between the two!
 
 -   If the data synthesis process is good, then hopefully a model won't be able to distinguish between the two.
 
@@ -766,34 +766,6 @@ Question 2: Assume that previously an attacker did not know the `skin_color` of 
 * **Lessons learned:**
     * Synthetic data can work well for tax microsimulation. 
     * It is difficult to match certain utility metrics for sparse variables.
-
-## Fully Synthetic SIPP data [@benedetto2018creation]
-
-* **Data:** Survey of Income and Program Participation linked to administrative longitudinal earnings and benefits data from IRS and SSA.
-* **Motivation:** To expand access to detailed economic data that is highly restricted without heavy disclosure control. 
-* **Methods:** Sequential regression multiple imputation (SRMI) with OLS regression, logistic regression, and Bayesian bootstrap. They released four implicates of the synthetic data.
-* **Important metrics:**
-    * General utility: pMSE
-    * Specific utility: None
-    * Disclosure: Distance based re-identification, RMSE of the closest record to measure attribute disclosure
-* **Lessons learned:**
-    * One of the first major synthetic files in the US.
-    * The file includes complex relationships between family members that are synthesized. 
-    
-## Partially Synthetic Geocodes [@drechsler2021synthesizing]
-
-* **Data:** Integrated Employment Biographies (German administrative data) with linked geocodes (latitude and longitude) 
-* **Motivation:** Rich geographic information can be used to answer many important labor market research questions. This data would otherwise would be too sensitive to release, due to the possibility of identifying an individual based on the combination of their location and other attributes.
-* **Methods:** CART with categorical geocodes. Also evaluated CART with continuous geocodes and a Bayesian latent class model.
-* **Important metrics:**
-    * General utility: Relative frequencies of cross tabulations
-    * Specific utility: Zip Code comparisons of tabulated variables, Ripley's K- and L-functions
-    * Disclosure: Probabilities of re-identification (Reiter and Mitra, 2009) -> comparison of expected match risk and the true match rate
-* **Lessons learned:**
-    * The synthetic data with geocodes had more measured disclosure risk than the original data. 
-    * Synthesizing more variables made a huge difference in the measured disclosure risks.
-    * Adjusting CART hyperparameters was not an effective way to manage the risk-utility tradeoff. 
-    * They stratified the data before synthesis for computational reasons. 
 
 # Suggested Reading
 
