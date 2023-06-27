@@ -216,7 +216,9 @@ create_table <- function(data_df,
 
     -   A study by Dr. Latayna Sweeney based on the 1990 Census [@sweeney2000simple] found that the 87% of the US population had reported characteristics that likely made them unique based only on ZIP, gender, and date of birth.
 
--   At the same time, releasing granular data can be of immense value to researchers. For example, cell phone data are invaluable for emergency responses to natural disasters, and granular medical data will lead to better treatment and development of cures. ![](images/racial_data_covid.png){width="310"}
+-   At the same time, releasing granular data can be of immense value to researchers. For example, cell phone data are invaluable for emergency responses to natural disasters, and granular medical data will lead to better treatment and development of cures.
+
+![](images/racial_data_covid.png){width="310"}
 
 -   More granular data are also important for understanding equity, particularly for smaller populations and subgroups.
 
@@ -244,7 +246,7 @@ create_table <- function(data_df,
 
 -   There is often a tension between privacy and data utility (or usefulness). This tension is referred to in the data privacy literature as the “privacy-utility trade-off.”
 
-    -   For example, some universities require students to install an app that tracks their movements on campus.This allows professors teaching large classes with 100+ students to know their students’ punctuality, tardiness, or class absences. This tracking can be invasive, especially for students who rarely leave campus except during holidays, because the university now has a comprehensive record of their daily lives. However, the tracking app could alert students about an active shooter on campus, identify safe buildings to seek refuge, and notify emergency contacts regarding the students' safety.
+    -   For example, some universities require students to install an app that tracks their movements on campus. This allows professors teaching large classes with 100+ students to know their students’ punctuality, tardiness, or class absences. This tracking can be invasive, especially for students who rarely leave campus except during holidays, because the university now has a comprehensive record of their daily lives. However, the tracking app could alert students about an active shooter on campus, identify safe buildings to seek refuge, and notify emergency contacts regarding the students' safety.
 
     -   **Data utility, quality, accuracy, or usefulness:** how practically useful or accurate to the data are for research and analysis purposes. 
 
@@ -634,7 +636,7 @@ sample_conf <- sample_conf %>%
   )
 ```
 
-And after imptuation, the histogram looks like this:
+And after imputation, the histogram looks like this:
 
 ```{r, echo = F, fig.height = 3.5, after_hist}
 # replot the histogram
@@ -721,7 +723,7 @@ table %>%
 
 You have a confidential dataset that contains information about dogs' `weight` and their `height`. You decide to sequentially synthesize these two variables and write up your method below. Can you spot the mistake in writing up your method?
 
-> To create a synthetic record, first synthetic pet weight is assigned based on a random draw from a normal distribution with mean equal to the average of confidential weights, and standard deviation equal to the standard deviation of confidential weights. Then the confidential height is regressed on the synthetic weights. Using the resulting regression coefficients, a synthetic height variable is generated for each row in the data using just the synthetic `weight`s as an input.
+> To create a synthetic record, first synthetic pet weight is assigned based on a random draw from a normal distribution with mean equal to the average of confidential weights, and standard deviation equal to the standard deviation of confidential weights. Then the confidential `height` is regressed on the synthetic `weight`. Using the resulting regression coefficients, a synthetic `height` variable is generated for each row in the data using just the synthetic `weight` values as an input.
 
 <br> <br>
 
@@ -730,7 +732,7 @@ You have a confidential dataset that contains information about dogs' `weight` a
 You have a confidential dataset that contains information about dogs' `weight` and their `height`. You decide to sequentially synthesize these two variables and write up your method below. Can you spot the mistake in writing up your method?
 
 
-> To create a synthetic record, first synthetic pet weight is assigned based on a random draw from a normal distribution with mean equal to the average of confidential weights, and standard deviation equal to the standard deviation of confidential weights. Then the confidential height is regressed on the synthetic weights. Using the resulting regression coefficients, a synthetic height variable is generated for each row in the data using just the synthetic `weight`s as an input.
+> To create a synthetic record, first synthetic pet weight is assigned based on a random draw from a normal distribution with mean equal to the average of confidential weights, and standard deviation equal to the standard deviation of confidential weights. Then the confidential `height` is regressed on the synthetic `weight`. Using the resulting regression coefficients, a synthetic `height` variable is generated for each row in the data using just the synthetic `weight` values as an input.
 <br> <br>
 
 - **`Height` should be regressed on the confidential values for `weight`, rather than the synthetic values for `weight`**
