@@ -206,7 +206,7 @@ create_table <- function(data_df,
 
 # Why is Data Privacy important?
 
--   Modern computing and technology has made collecting and processing large amounts of data quickly.
+-   Modern computing and technology has made it easy to collect and process large amounts of data quickly.
 
 -   But, with that computing power, malicious actors can now easily reidentify individuals by linking supposedly anonymized records with public databases.
 
@@ -294,7 +294,7 @@ create_table <- function(data_df,
 
 -   SDC methods have existed within statistics and the social sciences since the mid-twentieth century.
 
--   Below is an opinionated, and incomplete overview of various SDC methods. For this set of traing sessions, we will focus in-depth on the methods in yellow.
+-   Below is an opinionated, and incomplete overview of various SDC methods. For this set of training sessions, we will focus in-depth on the methods in yellow.
 
 ```{r sdc_overview_mmd, echo = FALSE, eval = T}
 
@@ -336,7 +336,7 @@ width = 800)
 
     -   Top/bottom coding eliminates information at the tails of the distributions, degrading analyses that depend on the entire distribution (Fuller 1993; Reiter, Wang, and Zhang, 2014).
 
--   A newer development in the SDC field with the potential to overcome some of these problems is Synthetic Data, which we will discuss further in session 2.
+-   A newer development in the SDC field with the potential to overcome some of these problems is Synthetic Data, which we will discuss further in the second half of this session.
 
 <br>
 
@@ -738,36 +738,7 @@ You have a confidential dataset that contains information about dogs' `weight` a
 
 <br> <br>
 
-# Case Studies
 
-## Fully Synthetic SIPP data [@benedetto2018creation]
-
-* **Data:** Survey of Income and Program Participation linked to administrative longitudinal earnings and benefits data from IRS and SSA.
-* **Motivation:** To expand access to detailed economic data that is highly restricted without heavy disclosure control. 
-* **Methods:** Sequential regression multiple imputation (SRMI) with OLS regression, logistic regression, and Bayesian bootstrap. They released four implicates of the synthetic data.
-* **Important metrics:**
-    * General utility: pMSE
-    * Specific utility: None
-    * Disclosure: Distance based re-identification, RMSE of the closest record to measure attribute disclosure.
-* **Lessons learned:**
-    * One of the first major synthetic files in the US.
-    * The file includes complex relationships between family members that are synthesized. 
-    
-## Partially Synthetic Geocodes [@drechsler2021synthesizing]
-
-* **Data:** Integrated Employment Biographies (German administrative data) with linked geocodes (latitude and longitude). 
-* **Motivation:** Rich geographic information can be used to answer many important labor market research questions. This data would otherwise would be too sensitive to release, due to the possibility of identifying an individual based on the combination of their location and other attributes.
-* **Methods:** CART with categorical geocodes. Also evaluated CART with continuous geocodes and a Bayesian latent class model.
-* **Important metrics:**
-    * General utility: Relative frequencies of cross tabulations.
-    * Specific utility: Zip Code comparisons of tabulated variables, Ripley's K- and L-functions.
-    * Disclosure: Probabilities of re-identification [@reiter2009estimating] -> comparison of expected match risk and the true match rate.
-* **Lessons learned:**
-    * The synthetic data with geocodes had more measured disclosure risk than the original data. 
-    * Synthesizing more variables made a huge difference in the measured disclosure risks.
-    * Adjusting CART hyperparameters was not an effective way to manage the risk-utility tradeoff. 
-    * They stratified the data before synthesis for computational reasons. 
-    
 # Suggested Reading - General Data Privacy
 
 -   Matthews, G. J., & Harel, O. (2011). Data confidentiality: A review of methods for statistical disclosure limitation and methods for assessing privacy. Statistics Surveys, 5, 1-29. [link](https://projecteuclid.org/journals/statistics-surveys/volume-5/issue-none/Data-confidentiality--A-review-of-methods-for-statistical-disclosure/10.1214/11-SS074.pdf)
