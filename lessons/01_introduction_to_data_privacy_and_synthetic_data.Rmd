@@ -206,7 +206,7 @@ create_table <- function(data_df,
 
 # Why is Data Privacy important?
 
--   Modern computing and technology has made collecting and processing large amounts of data easy.
+-   Modern computing and technology has made collecting and processing large amounts of data quickly.
 
 -   But, with that computing power, malicious actors can now easily reidentify individuals by linking supposedly anonymized records with public databases.
 
@@ -216,7 +216,7 @@ create_table <- function(data_df,
 
     -   A study by Dr. Latayna Sweeney based on the 1990 Census [@sweeney2000simple] found that the 87% of the US population had reported characteristics that likely made them unique based only on ZIP, gender, and date of birth.
 
--   At the same time, releasing granular data can be of immense value to researchers. For example, cell phone data are invaluable for contact tracing, and granular medical data will lead to better treatment and development of cures. ![](images/racial_data_covid.png){width="310"}
+-   At the same time, releasing granular data can be of immense value to researchers. For example, cell phone data are invaluable for emergency responses to natural disasters, and granular medical data will lead to better treatment and development of cures. ![](images/racial_data_covid.png){width="310"}
 
 -   More granular data are also important for understanding equity, particularly for smaller populations and subgroups.
 
@@ -232,7 +232,7 @@ create_table <- function(data_df,
 
 -   Data Privacy is a broad topic, which includes data security, encryption, access to data, etc.
 
-    -   We will not be covering privacy breaches from unauthorized access to a database (i.e., hackers).
+    -   We will not be covering privacy breaches from unauthorized access to a database (e.g., hackers).
 
     -   We are instead focused on privacy preserving access to data.
 
@@ -242,7 +242,9 @@ create_table <- function(data_df,
 
     -   **Confidentiality:** "the agreement, explicit or implicit, between data subject and data collector regarding the extent to which access by others to personal information is allowed" [@fienberg2018statistical].
 
--   There is often a tension between privacy and data utility (or usefulness). This tension is often referred to in the data privacy literature as the “privacy-utility trade-off.”
+-   There is often a tension between privacy and data utility (or usefulness). This tension is referred to in the data privacy literature as the “privacy-utility trade-off.”
+
+    -   For example, some universities require students to install an app that tracks their movements on campus.This allows professors teaching large classes with 100+ students to know their students’ punctuality, tardiness, or class absences. This tracking can be invasive, especially for students who rarely leave campus except during holidays, because the university now has a comprehensive record of their daily lives. However, the tracking app could alert students about an active shooter on campus, identify safe buildings to seek refuge, and notify emergency contacts regarding the students' safety.
 
     -   **Data utility, quality, accuracy, or usefulness:** how practically useful or accurate to the data are for research and analysis purposes. 
 
@@ -250,15 +252,19 @@ create_table <- function(data_df,
 
 -   In the data privacy ecosystem there are the following stakeholders:
 
-    -   **Data users:** Those who consume the data, e.g., researchers, decisionmakers, etc.
+    -   **Data users and practitioners:** individuals who consume the data, such as analysts, researchers, planners, and decision-makers.
+    
+    -   **Data privacy experts or researchers:** individuals who specialize in developing data privacy and confidentiality methods.
 
-    -   **Data maintainers** (aka data stewards/data owners): Those who own the data and are responsible for its safekeeping.
+    -   **Data curators, maintainers, or stewards:** (aka data stewards/data owners): individuals who own  the data and are responsible for its safekeeping.
+    
+    -   **Data intruders, attackers, or adversaries:** individuals who try to gather sensitive information from the confidential data.
 
 -   In addition, there are many version of the data we should define:
 
     -   **Original dataset:** the uncleaned, unprotected version of the data, such as the raw census microdata, which are never publicly released. 
 
-    -   **Confidential dataset:** the cleaned version (meaning edited for inaccuracies or inconsistencies) of the data; often referred to as the gold standard or actual data for analysis. For example, the Census Edited File that is the final confidential data for the 2020 Census. This dataset is never publicly released but may be made available to others who are sworn to protect confidentiality and who are provided access in a secure environment, such as a Federal Statistical Research Data Center. 
+    -   **Confidential or gold standard dataset:** the cleaned version (meaning edited for inaccuracies or inconsistencies) of the data; often referred to as the gold standard or actual data for analysis. For example, the Census Edited File that is the final confidential data for the 2020 Census. This dataset is never publicly released but may be made available to others who are sworn to protect confidentiality and who are provided access in a secure environment, such as a Federal Statistical Research Data Center. 
 
     -   **Public dataset:** the publicly released version of the confidential data, such as the US Census Bureau’s public tables and datasets.
 
@@ -268,13 +274,13 @@ create_table <- function(data_df,
 
 # Data Privacy Workflow
 
--   Data users have traditionally gotten access to data via:
+-   Data users have traditionally gained access to data via:
 
     a)  direct access to the confidential data if they are trusted users (e.g., obtaining Special Sworn Status to use the Federal Statistical Research Data Centers). 
 
-    b)  Access to public data or statistics, such as public microdata and summary tables, that are produced by data curators and modified to protect confidentiality.
+    b)  Access to public data or statistics, such as public microdata and summary tables, that the data curators and privacy experts produced with modification to protect confidentiality.
 
--   The latter is how most data users gain access to information from confidential data and what we will focus on for this course. To create public data or statistics, data curators rely on statistical disclosure control (SDC) methods to preserve data confidentiality. The process of releasing this information publicly often involves the steps shown in figure 4.
+-   The latter is how most data users gain access to information from confidential data and what we will focus on for this course. To create public data or statistics, data curators rely on statistical disclosure control (SDC) or limitation (SDL) methods to preserve data confidentiality. The process of releasing this information publicly often involves the steps shown in figure 4.
 
 -   Generally releasing confidential data involves the following steps to protect privacy:
 
@@ -284,11 +290,11 @@ create_table <- function(data_df,
 
 # Overview of SDC
 
--   **Statistical Disclosure Control (SDC)** or Statistical Disclosure Limitation (SDL) is a field of study that aims to develop methods for releasing high-quality data products while preserving data confidentiality as a means of maintaining privacy. 
+-   **Statistical Disclosure Control (SDC)** or Statistical Disclosure Limitation (SDL) is a field of study that aims to develop methods for releasing high-quality data products while preserving data confidentiality as a means of maintaining privacy.
 
 -   SDC methods have existed within statistics and the social sciences since the mid-twentieth century.
 
--   Below is an opinionated, and incomplete overview of various SDC methods. For this set of trainings, we will focus in-depth on the methods in yellow.
+-   Below is an opinionated, and incomplete overview of various SDC methods. For this set of traing sessions, we will focus in-depth on the methods in yellow.
 
 ```{r sdc_overview_mmd, echo = FALSE, eval = T}
 
@@ -330,7 +336,7 @@ width = 800)
 
     -   Top/bottom coding eliminates information at the tails of the distributions, degrading analyses that depend on the entire distribution (Fuller 1993; Reiter, Wang, and Zhang, 2014).
 
--   A newer development in the SDC field with the potential to overcome some of these problems is Synthetic Data, which we will discuss further in part 2.
+-   A newer development in the SDC field with the potential to overcome some of these problems is Synthetic Data, which we will discuss further in session 2.
 
 <br>
 
@@ -408,13 +414,11 @@ penguins %>%
 
 # Synthetic Data
 
-
 **Synthetic data** consists of pseudo or “fake” records that are statistically representative of the confidential data. Records are considered **synthesized** when they are replaced with draws from a model fitted to the confidential data. 
 
 - The goal of most synthesis is to closely mimic the underlying distribution and statistical properties of the real data to preserve data utility while minimizing disclosure risks.
 - Synthesized values also limit an intruder's confidence, because they cannot confirm a synthetic value exists in the confidential dataset.
 - Synthetic data may be used as a “training dataset” to develop programs to run on confidential data via a validation server.
-
 
 **Partially synthetic** data only synthesizes some of the variables in the released data (generally those most sensitive to disclosure). In partially synthetic data, there remains a one-to-one mapping between confidential records and synthetic records. Below, we see an example of what a partially synthesized version of the above confidential data could look like.
 
@@ -639,10 +643,9 @@ ggplot(sample_conf, aes(x = age)) +
   labs(title = 'Histogram of attendee ages (with missing values imputed)')
 ```
 
-
 -   Using the mean to impute the missing ages removes useful variation and conceals information from the "tails" of the distribution.
--   Another way to think about it was that we used a really straightforward model (just replace the data with the mean) and sampled from that model to fill in the missing values.
--   When creating synthetic data, this process is repeated for an entire variable, or set of variables
+-   Simply put, we used a straightforward model (replace the data with the mean) and sampled from that model to fill in the missing values.
+-   When creating synthetic data, this process is repeated for an entire variable, or set of variables.
 -   In a sense, the entire column is treated as missing!
 
 
@@ -650,11 +653,9 @@ ggplot(sample_conf, aes(x = age)) +
 
 # Sequential Synthesis
 
-A more advanced implementation of synthetic data generation estimates models for each predictor with previously synthesized variables used as predictors. This iterative process is called **sequential synthesis**. This allows us to easily model multivariate relationships (or joint distributions) without being computationally expensive
-
+A more advanced implementation of synthetic data generation estimates models for each predictor with previously synthesized variables used as predictors. This iterative process is called **sequential synthesis**. This allows us to easily model multivariate relationships (or joint distributions) without being computationally expensive.
 
 The process described above may be easier to understand with the following table:
-
 
 ```{r, echo = FALSE}
 table = tribble(~Step, ~Outcome, ~`Modelled with`, ~`Predicted with`,
@@ -669,7 +670,6 @@ table %>%
 
 <br>
 <br>
-
 
 - We can select the synthesis order based on the priority of the variables or the relationships between them.
 - The earlier in the order a variable is synthesized, the better the original information is preserved in the synthetic data **usually**.
@@ -703,13 +703,13 @@ table %>%
 
 -   Researchers can create any number of versions of a partially synthetic or fully synthetic dataset. Each version of the dataset is called an **implicate**. These can also be referred to as replicates or simply "synthetic datasets"
 
-    -   For partially synthetic data, non-synthesized variables are the same across each version of the dataset
+    -   For partially synthetic data, non-synthesized variables are the same across each version of the dataset.
 
--   Multiple implicates are useful for understanding the uncertainty added by imputation and are required for calculating valid standard errors
+-   Multiple implicates are useful for understanding the uncertainty added by imputation and are required for calculating valid standard errors.
 
--   More than one implicate can be released for public use; each new release, however, increases disclosure risk (but allows for more complete analysis and better inferences, provided users use the correct combining rules)
+-   More than one implicate can be released for public use; each new release, however, increases disclosure risk (but allows for more complete analysis and better inferences, provided users use the correct combining rules).
 
--   Implicates can also be analyzed internally to find which version(s) of the dataset provide the most utility in terms of data quality
+-   Implicates can also be analyzed internally to find which version(s) of the dataset provide the most utility in terms of data quality.
 
 <br> <br>
 
@@ -738,7 +738,7 @@ You have a confidential dataset that contains information about dogs' `weight` a
 
 <br> <br>
 
-# Case Study
+# Case Studies
 
 ## Fully Synthetic SIPP data [@benedetto2018creation]
 
@@ -748,20 +748,20 @@ You have a confidential dataset that contains information about dogs' `weight` a
 * **Important metrics:**
     * General utility: pMSE
     * Specific utility: None
-    * Disclosure: Distance based re-identification, RMSE of the closest record to measure attribute disclosure
+    * Disclosure: Distance based re-identification, RMSE of the closest record to measure attribute disclosure.
 * **Lessons learned:**
     * One of the first major synthetic files in the US.
     * The file includes complex relationships between family members that are synthesized. 
     
 ## Partially Synthetic Geocodes [@drechsler2021synthesizing]
 
-* **Data:** Integrated Employment Biographies (German administrative data) with linked geocodes (latitude and longitude) 
+* **Data:** Integrated Employment Biographies (German administrative data) with linked geocodes (latitude and longitude). 
 * **Motivation:** Rich geographic information can be used to answer many important labor market research questions. This data would otherwise would be too sensitive to release, due to the possibility of identifying an individual based on the combination of their location and other attributes.
 * **Methods:** CART with categorical geocodes. Also evaluated CART with continuous geocodes and a Bayesian latent class model.
 * **Important metrics:**
-    * General utility: Relative frequencies of cross tabulations
-    * Specific utility: Zip Code comparisons of tabulated variables, Ripley's K- and L-functions
-    * Disclosure: Probabilities of re-identification [@reiter2009estimating] -> comparison of expected match risk and the true match rate
+    * General utility: Relative frequencies of cross tabulations.
+    * Specific utility: Zip Code comparisons of tabulated variables, Ripley's K- and L-functions.
+    * Disclosure: Probabilities of re-identification [@reiter2009estimating] -> comparison of expected match risk and the true match rate.
 * **Lessons learned:**
     * The synthetic data with geocodes had more measured disclosure risk than the original data. 
     * Synthesizing more variables made a huge difference in the measured disclosure risks.
