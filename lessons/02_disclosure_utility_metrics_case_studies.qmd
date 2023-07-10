@@ -1,0 +1,1169 @@
+---
+title: "Utility and Disclosure Risk Metrics and Synthetic Data Case Studies"
+date: today
+format:
+  html:
+    fig-cap-location: top
+    number_sections: false
+    embed-resources: true
+    code-fold: true
+    toc: true
+    css: ../www/web_report.css
+editor_options:
+  chunk_output_type: console
+execute:
+  warning: false
+  message: false
+bibliography: references.bib
+---
+
+```{=html}
+<style>
+@import url('https://fonts.googleapis.com/css?family=Lato&display=swap');
+</style>
+```
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato" />
+
+```{r header-image, fig.width = 5.14, fig.height = 1.46, echo = FALSE}
+# All defaults
+knitr::include_graphics(here::here('www', 'images', 'urban-institute-logo.png'))
+
+```
+
+```{r setup}
+#| label: setup
+#| echo: false
+
+options(scipen = 999)
+
+library(tidyverse)
+library(gt)
+library(palmerpenguins)
+library(urbnthemes)
+library(here)
+
+set_urbn_defaults()
+
+create_table <- function(data_df, 
+                         rowname_col = NA,
+                         fig_num = "",
+                         title_text = ""){
+  # random_id = random_id(n=10)
+  random_id = "urban_table"
+  
+  basic_table = data_df |> 
+    gt(id = random_id, rowname_col = rowname_col) |> 
+    tab_options(#table.width = px(760),
+      table.align = "left", 
+      heading.align = "left",
+      # TODO: Discuss with Comms whether border should extend across 
+      # whole row at bottom or just across data cells
+      table.border.top.style = "hidden",
+      table.border.bottom.style = "transparent",
+      heading.border.bottom.style = "hidden",
+      # Need to set this to transparent so that cells_borders of the cells can display properly and 
+      table_body.border.bottom.style = "transparent",
+      table_body.border.top.style = "transparent",
+      # column_labels.border.bottom.style = "transparent",
+      column_labels.border.bottom.width = px(1),
+      column_labels.border.bottom.color = "black",
+      # row_group.border.top.style = "hidden",
+      # Set font sizes
+      heading.title.font.size = px(13),
+      heading.subtitle.font.size = px(13),
+      column_labels.font.size = px(13),
+      table.font.size = px(13),
+      source_notes.font.size = px(13),
+      footnotes.font.size = px(13),
+      # Set row group label and border options
+      row_group.font.size = px(13),
+      row_group.border.top.style = "transparent",
+      row_group.border.bottom.style = "hidden",
+      stub.border.style = "dashed",
+    ) |> 
+    tab_header(
+      title = fig_num,# "eyebrow",
+      subtitle = title_text) |>  #"Top 10 Banks (by Dollar Volume) for Community Development Lending") |> 
+    # Bold title, subtitle, and columns
+    tab_style(
+      style = cell_text(color = "black", weight = "bold", align = "left"),
+      locations = cells_title("subtitle")
+    ) |> 
+    tab_style(
+      style = cell_text(color = "#696969", weight = "normal", align = "left", transform = "uppercase"),
+      locations = cells_title("title")
+    ) |> 
+    tab_style(
+      style = cell_text(color = "black", weight = "bold", size = px(13)),
+      locations = cells_column_labels(gt::everything())
+    ) |> 
+    # Italicize row group and column spanner text
+    tab_style(
+      style = cell_text(color = "black", style = "italic", size  = px(13)),
+      locations = gt::cells_row_groups()
+    ) |> 
+    tab_style(
+      style = cell_text(color = "black", style = "italic", size  = px(13)),
+      locations = gt::cells_column_spanners()
+    ) |> 
+    opt_table_font(
+      font = list(
+        google_font("Lato"),
+        default_fonts()
+      )
+    ) |> 
+    # Adjust cell borders for all cells, small grey bottom border, no top border
+    tab_style(
+      style = list(
+        cell_borders(
+          sides = c("bottom"),
+          color = "#d2d2d2",
+          weight = px(1)
+        )
+      ),
+      locations = list(
+        cells_body(
+          columns =  gt::everything()
+          # rows = gt::everything()
+        )
+      )
+    )  |>
+    tab_style(
+      style = list(
+        cell_borders(
+          sides = c("top"),
+          color = "#d2d2d2",
+          weight = px(0)
+        )
+      ),
+      locations = list(
+        cells_body(
+          columns =  gt::everything()
+          # rows = gt::everything()
+        )
+      )
+    )  |>
+    # Set missing value defaults
+    fmt_missing(columns = gt::everything(), missing_text = "...") |>
+    # Set css for all the things we can't finetune exactly in gt, mostly t/r/b/l padding
+    opt_css(
+      css = str_glue("
+      #{random_id} .gt_row {{
+        padding: 5px 5px 5px 5px;
+      }}
+      #{random_id} .gt_sourcenote {{
+        padding: 16px 0px 0px 0px;
+      }}
+      #{random_id} .gt_footnote {{
+        padding: 16px 0px 0px 0px;
+      }}
+      #{random_id} .gt_subtitle {{
+        padding: 0px 0px 2px 0px;
+      }}
+      #{random_id} .gt_col_heading {{
+        padding: 10px 5px 10px 5px;
+      }}
+      #{random_id} .gt_col_headings {{
+        padding: 0px 0px 0px 0px;
+        border-top-width: 0px;
+      }}
+      #{random_id} .gt_group_heading {{
+        padding: 15px 0px 0px 0px;
+      }}
+      #{random_id} .gt_stub {{
+        border-bottom-width: 1px;
+        border-bottom-style: solid;
+        border-bottom-color: #d2d2d2;
+        border-top-color: black;
+        text-align: left;
+      }}
+      #{random_id} .gt_grand_summary_row {{
+        border-bottom-width: 1px;
+        border-top-width: 1px;
+        border-bottom-style: solid;
+        border-bottom-color: #d2d2d2;
+        border-top-color: #d2d2d2;
+      }}
+      #{random_id} .gt_summary_row {{
+        border-bottom-width: 1px;
+        border-top-width: 1px;
+        border-bottom-style: solid;
+        border-bottom-color: #d2d2d2;
+      }}
+      #{random_id} .gt_column_spanner {{
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }}
+      ") |> as.character()
+    )
+  
+  return(basic_table)
+}
+```
+
+<br>
+
+# Review
+
+::: {.panel-tabset}
+
+### Question 1
+
+*What's the difference between partially synthetic data and fully synthetic data?*
+
+### Question 1 Notes
+
+*What's the difference between partially synthetic data and fully synthetic data?*
+
+**Partially synthetic data** contains unaltered and synthesized variables. In partially synthetic data, there remains a one-to-one mapping between confidential records and synthetic records.
+
+**Fully synthetic data** only contains synthesized variables. Fully synthetic data no longer directly map onto the confidential records, but remain statistically representative. 
+
+:::
+
+::: {.callout-tip}
+## Sequential synthesis
+
+In a perfect world, we would synthesize data by directly modeling the joint distribution of the variables of interest. Unfortunately, this is often computationally infeasible. 
+
+Instead, we often decompose a joint distribution into a marginal distribution and a sequence of conditional distributions. 
+:::
+
+::: {.panel-tabset}
+
+### Question 2
+
+*What's the difference between specific utility and general utility?*
+
+### Question 2 Notes
+
+*What's the difference between specific utility and general utility?*
+
+**Specific Utility** measures the similarity of results for a specific analysis (or analyses) of the confidential and public data (e.g., comparing the coefficients in regression models).
+
+**General Utility** measures the univariate and multivariate distributional similarity between the confidential data and the public data (e.g., sample means, sample variances, and the variance-covariance matrix).
+
+:::
+
+<br><br><br><br>
+
+# General Utility Metrics
+
+-   As a refresher, general utility metrics measure the distributional similarity (i.e., all statistical properties) between the original and synthetic data.
+
+-   General utility metrics are useful because they provide a sense of how "fit for use" synthetic data is for analysis without making assumptions about the uses of the synthetic data.
+
+## Univariate
+
+-   **Categorical variables:** frequencies, relative frequencies
+
+-   **Numeric variables** means, standard deviations, skewness, kurtosis (i.e., first four moments), percentiles, and number of zero/non-zero values
+
+ ![](images/puf_mean_example.png){width="469"}![](images/compare_sds.png){width="436"}
+
+-   It is also useful to visually compare univariate distributions using histograms (@fig-histogram), density plots (@fig-density), and empirical cumulative distribution function plots (@fig-ecdf).
+
+```{r, echo = FALSE, fig.height = 3.5}
+compare_penguins <- read_csv(here::here("data", "penguins_synthetic_and_confidential.csv"))
+
+```
+
+```{r}
+#| label: fig-histogram
+#| fig-cap: Compare Synthetic and Confidential Distributions with Histograms
+#| fig-height: 3.5
+
+compare_penguins |>
+  select(
+    data_source, 
+    bill_length_mm, 
+    flipper_length_mm
+  ) |>
+  pivot_longer(-data_source, names_to = "variable") |>
+  ggplot(aes(x = value, fill = data_source)) +
+  geom_histogram(alpha = 0.3, color = NA, position = "identity") +
+  facet_wrap(~ variable, scales = "free") +
+  scatter_grid()
+
+```
+
+```{r}
+#| label: fig-density
+#| fig-cap: Compare Synthetic and Confidential Distributions with Density Plots
+#| fig-height: 3.5
+
+compare_penguins |>
+  select(
+    data_source, 
+    bill_length_mm, 
+    flipper_length_mm
+  ) |>
+  pivot_longer(-data_source, names_to = "variable") |>
+  ggplot(aes(x = value, fill = data_source)) +
+  geom_density(alpha = 0.3, color = NA) +
+  facet_wrap(~variable, scales = "free") +
+  scatter_grid()
+
+```
+
+```{r}
+#| label: fig-ecdf
+#| fig-cap: Compare Synthetic and Confidential Distributions with Empirical CDF Plots
+#| fig-height: 3.5
+
+compare_penguins |>
+  select(
+    data_source, 
+    bill_length_mm, 
+    flipper_length_mm
+  ) |>
+  pivot_longer(-data_source, names_to = "variable") |>
+  ggplot(aes(x = value, color = data_source)) +
+  stat_ecdf() +
+  facet_wrap(~ variable, scales = "free") +
+  scatter_grid()
+
+```
+
+
+## Bivariate
+
+::: {.callout-tip}
+## Correlation Fit
+
+**Correlation fit** measures how well the synthesizer recreates the linear relationships between variables in the confidential dataset.
+:::
+
+-   Create correlation matrices for the synthetic data and confidential data. Then measure differences across synthetic and actual data. Those differences are often summarized across all variables using [L1](https://en.wikipedia.org/wiki/Taxicab_geometry) or [L2](https://en.wikipedia.org/wiki/Euclidean_distance) distance. 
+
+![Correlation Difference](images/puf_correlation_fit_example.png){#fig-corrdiff}
+
+* @fig-corrdiff shows the creation of a difference matrix. Let's summarize the difference matrix using mean absolute error. This will give us a sense of how off the average correlation will be in the synthetic data compared to the confidential data.
+
+$$MAE_{dist} = \frac{1}{n}\sum_{i = 1}^n |dist|$$
+
+$$MAE_{dist} = \frac{1}{6} \left(|-0.15| + |0.01| + |0.1| + |-0.15| + |0.15| + |0.02|\right) \approx `r mean(abs(c(-0.15, 0.01, 0.1, -0.15, 0.15, 0.02)))`$$
+
+-   Advanced measures like *relative mutual information* can be used to measure the relationships between categorical variables. 
+
+## Multivariate
+
+::: {.callout-tip}
+## Discriminant Based Methods
+
+**Discriminant based methods** measure well a predictive model can distinguish (i.e., discriminate) between records from the confidential and synthetic data. 
+:::
+
+-   The confidential data and synthetic data should theoretically be drawn from the same super population. 
+
+-   The basic idea is to combine (stack) the confidential data and synthetic data and see how well a predictive model distinguish (i.e., discriminate) between synthetic observations and confidential observations.
+
+-   An inability to distinguish between the records suggests a good synthesis. 
+
+-   It is possible to use logistic regression for the predictive modeling, but decision trees, random forests, and boosted trees are more common. 
+
+-   @fig-discriminant shows three discriminant based metrics calculated on a good synthesis and a poor synthesis. 
+
+::: {#fig-discriminant layout-nrow=2}
+
+![Good Synthesis](images/same_population_general_utility_metrics.png){width=518}
+
+![Poor Synthesis](images/both_axis_different_general_utility_metrics.png){width=518}
+
+A comparison of discriminant metrics on a good synthesis and a poor synthesis
+:::
+
+### Calculating Discriminant Metrics
+
+-   pMSE ratio, SPECKS, and AUC all require calculating propensity scores (i.e., the probability that a particular data point belongs to the confidential data) and start with the same step. 
+
+1)  *Combine the synthetic and confidential data. Add an indicator variable with 0 for the confidential data and 1 for the synthetic data*
+
+```{r, echo = FALSE}
+  
+set.seed(1297)
+      
+x = penguins |>
+  select(species, bill_length_mm, sex) |> 
+  sample_n(2) |> 
+  add_row(.before = 2) |> 
+  mutate(ind = c(0, NA, 1))
+      
+x |> 
+  create_table() |> 
+  fmt_missing(columns = everything(), 
+              missing_text = "...") |> 
+  tab_style(cell_fill(color = palette_urbn_main["cyan"], alpha = 0.3), 
+                    locations = cells_body(columns = ind))
+```
+
+<br>
+
+2)  *Calculate propensity scores (i.e., probabilities for group membership) for whether a given row belong to the synthetic dataset.*
+
+```{r, echo = FALSE}
+set.seed(1297)
+    
+    
+x |> 
+  mutate(prop_score = c(0.32, NA, 0.64)) |> 
+  create_table() |> 
+  fmt_missing(columns = everything(), 
+              missing_text = "...") |> 
+  tab_style(cell_fill(color = palette_urbn_main["cyan"], alpha = 0.3), 
+                    locations = cells_body(columns = prop_score))
+```
+
+<br>
+
+::: {.panel-tabset}
+
+### pMSE
+
+-   **pMSE**: Calculates the average Mean Squared Error (MSE) between the propensity scores and the expected probabilities:
+
+-   Proposed by Woo et al. [@woo2009global] and enhanced by Snoke et al. [@snoke_raab_nowok_dibben_slavkovic_2018]
+
+-   After doing steps 1) and 2) above:
+
+    3)  *Calculate expected probability, i.e., the share of synthetic data in the combined data.* In the cases where the synthetic and confidential datasets are of equal size, this will always be 0.5.
+
+        ```{r, echo = FALSE}
+        set.seed(1297)
+            
+            
+                                x |> 
+          mutate(prop_score = c(0.32, NA, 0.64),
+                 exp_prob = c(0.5, NA, 0.5)) |> 
+          create_table() |> 
+          fmt_missing(columns = everything(), 
+                      missing_text = "...") |> 
+          tab_style(cell_fill(color = palette_urbn_main["cyan"], alpha = 0.3), 
+                    locations = cells_body(columns = exp_prob))
+        ```
+
+    <br>
+
+    4)  *Calculate pMSE, which is mean squared difference between the propensity scores and expected probabilities.*
+
+    $$pMSE = \frac{(0.32 - 0.5)^2 + ... + (0.64-0.5)^2}{N} $$
+
+-   Often people use the pMSE ratio, which is the average pMSE score across all records, divided by the null model [@snoke2018general].
+
+-   The null model is the the expected value of the pMSE score under the best case scenario when the model used to generate the data reflects the confidential data perfectly.
+
+-   pMSE ratio = 1 means that your synthetic data and confidential data are indistinguishable, although values this low are almost never achieved. 
+
+<br> <br>
+
+### SPECKS
+
+-   **SPECKS**: **S**ynthetic data generation; **P**ropensity score matching; **E**mpirical **C**omparison via the **K**olmogorov-**S**mirnov distance. 
+
+After generating propensity scores (i.e., steps 1 and 2 from above), you:
+
+3)  *Calculate the empirical CDF's of the propensity scores for the synthetic and confidential data, separately.*
+
+4)  *Calculate the Kolmogorov-Smirnov (KS) distance between the 2 empirical CDFs.* The KS distance is the maximum vertical distance between 2 empirical CDF distributions.
+
+![](images/ks_distance.png){width="251"}
+
+<br><br><br><br>
+
+### ROC Curves/AUC
+
+-   **Receiver Operating Characteristic (ROC) curves** show the trade off between false positives and true positives. Area under the curve (AUC) is a single number summary of the ROC curve. 
+
+AUC is a common tool for evaluating classification models. High values for AUC are bad because they suggest the model can distinguish between confidential and synthetic observations. 
+
+After generating propensity scores (i.e., steps 1 and 2 from above),
+
+![](images/roc_curve.png){width="572"}
+
+-   In our context, ***High AUC*** = good at discriminating = ***poor synthesis***.
+
+-   We want in the best case, AUC = 0.5 because that means the discriminator is no better than a random guess
+
+:::
+
+-   Look at @fig-discriminant to see calculations for pMSE ratio, SPECKS, and AUC. 
+-   It is useful to look at [variable importance](https://topepo.github.io/caret/variable-importance.html) for predictive models when observing poor discriminant based metrics. Variable importance can help diagnose which variables are poorly synthesized. 
+
+<br><br><br><br>
+
+## Exercise 1: Using Utility Metrics
+
+::: {.panel-tabset}
+
+### Exercise 1
+
+Consider the following two syntheses of `x`. **Which synthesis do you think is better?**
+
+```{r}
+set.seed(20230710)
+bind_rows(
+  synth1 = tibble(
+    x_conf = rnorm(n = 1000),
+    x_synth = rnorm(n = 1000, mean = 0.2)
+  ),
+  synth2 = tibble(
+    x_conf = rnorm(n = 1000),
+    x_synth = rnorm(n = 1000, sd = 0.5)
+  ),
+  .id = "synthesis"
+) |>
+  pivot_longer(-synthesis, names_to = "variable") |>
+  ggplot(aes(x = value, color = variable)) +
+  stat_ecdf() +
+  facet_wrap(~ synthesis) +
+  scatter_grid()
+
+```
+
+**Both syntheses have issues? What do you think are the issues?**
+
+### Exercise 1 Notes
+
+Consider the following two syntheses of `x`. **Which synthesis do you think is better?**
+
+```{r}
+set.seed(20230710)
+bind_rows(
+  synth1 = tibble(
+    x_conf = rnorm(n = 1000),
+    x_synth = rnorm(n = 1000, mean = 0.2)
+  ),
+  synth2 = tibble(
+    x_conf = rnorm(n = 1000),
+    x_synth = rnorm(n = 1000, sd = 0.5)
+  ),
+  .id = "synthesis"
+) |>
+  pivot_longer(-synthesis, names_to = "variable") |>
+  ggplot(aes(x = value, color = variable)) +
+  stat_ecdf() +
+  facet_wrap(~ synthesis) +
+  scatter_grid()
+
+```
+
+**Both syntheses have issues? What do you think are the issues?**
+
+* We consider `synth1` to be slightly better than `synth2` based on the large vertical distances between the lines for `synth2`.
+* `synth1` looks to match the variance of the confidential data but the mean is a little to high. `synth2` matches the mean, but it contains far too little variance. There aren't enough observations in the tails of the synthetic data.
+
+:::
+
+## Exercise 2: Correlation Difference
+
+::: {.panel-tabset}
+
+### Exercise 2
+
+Consider the following correlation matrices:
+
+```{r}
+#| echo: false
+
+print("Synthetic")
+mat_synth <- matrix(
+  c(
+    c(1, 0.5, 0.75),
+    c(0.5, 1, 0.8),
+    c(0.75, 0.8, 1)
+  ),
+  byrow = TRUE,
+  nrow = 3
+)
+mat_synth
+
+print("Confidential")
+mat_conf <- matrix(
+  c(
+    c(1, 0.35, 0.1),
+    c(0.35, 1, 0.9),
+    c(0.1, 0.9, 1)
+  ),
+  byrow = TRUE,
+  nrow = 3
+)
+mat_conf
+
+```
+
+* Construct the difference matrix
+* Calculate MAE
+* Optional: Calculate RMSE
+* Optional: What is the main difference between MAE and RMSE?
+
+### Exercise 2 Notes
+
+```{r}
+#| echo: false
+
+print("Synthetic")
+mat_synth
+
+print("Confidential")
+mat_conf
+
+```
+
+* Construct the difference matrix
+
+```{r}
+diff <- mat_synth - mat_conf
+
+diff[!lower.tri(diff)] <- NA
+
+diff
+
+```
+
+* Calculate MAE
+
+```{r}
+mean(abs(diff[lower.tri(diff)]))
+
+```
+
+* Optional: Calculate RMSE
+
+```{r}
+mean(diff[lower.tri(diff)] ^ 2)
+
+```
+
+* Optional: What is the main difference between MAE and RMSE?
+
+RMSE gives extra weight to large errors because it squares values instead of using absolute values. We like to think of this as the difference between the mean and the median error.
+
+:::
+
+# Specific Utility Metrics
+
+-   Specific utility metrics measure how suitable a synthetic dataset is for specific analyses.
+
+-   These specific utility metrics will change from application to application, depending on common uses of the data.
+
+-   A helpful rule of thumb: general utility metrics are useful for the data synthesizers to be convinced that they're doing a good job. Specific utility metrics are useful to convince downstream data users that the data synthesizers are doing a good job.
+
+## Recreating Inferences
+
+-   It can be useful to compare statistical analyses on the confidential data and synthetic data:
+    - Do the estimates have the same sign?
+    - Do the estimates have the same statistical inference at a common $\alpha$ level?
+    - Do the confidence intervals for the estimates overlap?
+
+- Each of these questions is useful. @barrientos_feasibility_2021 combine all three questions into sign, significance, and overlap (SSO) match. SSO is the proportion of times that intervals overlap and have the same sign and significance.
+
+## Regression confidence interval overlap:
+
+::: {.callout-tip}
+### Regression Confidence Interval Overlap
+
+**Regression confidence interval overlap** quantifies how well confidence intervals from estimates on the synthetic data recreate confidence intervals from the confidential data. 
+
+1 indicates perfect overlap. 0 indicates intervals that are adjacent but not overlapping. Negative values indicate gaps between the intervals.
+
+It is common the compare intervals from linear regression models and logistic regression models. 
+:::
+
+![](images/confidence_interval_overlap_ex.png){width="364"}
+
+
+-   The interpretability of confidence interval overlap diminishes when disclosure control methods generate very wide confidence intervals. 
+
+<br>
+
+## Microsimulation results
+
+-   The Urban Institute and Tax Policy Center are heavy users of microsimulation. 
+
+-   When synthesizing administrative tax data, we compare microsimulation results from tax calculators applied to the confidential data and synthetic data. @fig-microsim shows results from the 2012 Synthetic Supplement PUF.
+
+![microsim](images/microsimulation.png){#fig-microsim width=600}
+
+-   @fig-microsim compares distributional output from baseline runs. It is also useful to compare tax reforms on the confidential and synthetic data.
+
+<br><br><br><br>
+
+## Exercise 3: SSO
+
+::: {.panel-tabset}
+
+### Exercise 3
+
+Suppose we are interested in the following null and alternative hypotheses:
+
+$$H_0: \mu = 0$$
+
+$$H_a: \mu \ne 0$$
+
+Consider the following output:
+
+```{r}
+#| echo: false
+
+set.seed(20230709)
+
+x_conf <- rnorm(20, mean = 3)
+
+print(paste("Confidential Mean:", mean(x_conf)))
+
+print("Confidendital Confidence Interval")
+t.test(x_conf)$conf.int
+
+x_synth <- rnorm(20, mean = 2)
+
+print(paste("Synthetic Mean:", mean(x_synth)))
+
+print("Synthetic Confidence Interval")
+t.test(x_synth)$conf.int
+
+```
+
+**Do the synthetic data achieve SSO match?**
+
+### Exercise 3 Notes
+
+Suppose we are interested in the following null and alternative hypotheses:
+
+$$H_0: \mu = 0$$
+
+$$H_a: \mu \ne 0$$
+
+Consider the following output:
+
+```{r}
+#| echo: false
+
+set.seed(20230709)
+
+x_conf <- rnorm(20, mean = 3)
+
+print(paste("Confidential Mean:", mean(x_conf)))
+
+print("Confidendital Confidence Interval")
+t.test(x_conf)$conf.int
+
+x_synth <- rnorm(20, mean = 2)
+
+print(paste("Synthetic Mean:", mean(x_synth)))
+
+print("Synthetic Confidence Interval")
+t.test(x_synth)$conf.int
+
+```
+
+**Do the synthetic data achieve SSO match?**
+
+Yes! The confidence intervals overlap, the signs are the same, and the statistical significance is the same. 
+
+:::
+
+# Disclosure Risk Metrics
+
+We now pivot to evaluating the disclosure risks of synthetic data. 
+
+## Identity Disclosure Metrics
+
+::: {.callout-tip}
+## Identity Disclosure Metrics
+
+Identity disclosure metrics evaluate how often we correctly re-identify confidential records in the synthetic data. 
+
+**Note:** These metrics require major assumptions about attacker information.
+:::
+
+-   For fully synthetic datasets, there is no one to one relationship between individuals and records so identity disclosure risk is ill-defined. Generally identity disclosure risk applies to partially synthetic datasets (or datasets protected with traditional SDC methods).
+
+-   Most of these metrics rely on data maintainers essentially performing attacks against their synthetic data and seeing how successful they are at identifying individuals.
+
+### Basic matching approaches
+
+-   We start by making assumptions about the knowledge an attacker has (i.e., external publicly accessible data they have access to).
+
+-   For each confidential record, the data attacker identifies a set of partially synthetic records which they believe contain the target record (i.e., potential matches) using the external variables as matching criteria.
+
+-   There are distance-based and probability-based algorithms that can perform this matching. This matching process could be based on exact matches between variables or some relaxations (i.e., matching continuous variables within a certain radius of the target record, or matching adjacent categorical variables).
+
+-   We then evaluate how accurate our re-identification process was using a variety of metrics.
+
+As a simple example for the metrics we're about to cover, imagine a data attacker has access to the following external data:
+
+```{r, echo = FALSE}
+conf_data <- starwars |> 
+  select(homeworld, species, name)
+
+
+potential_matches_1 <- conf_data |> 
+  filter(homeworld == "Naboo", species == "Gungan") 
+
+potential_matches_2 <- conf_data |> 
+  filter(homeworld == "Naboo", species == "Droid") 
+
+
+external_data <- potential_matches_1 |> 
+  slice(1) |> 
+  bind_rows(potential_matches_2)
+
+external_data |> 
+  create_table() |> 
+  tab_style(
+    style = list(
+      cell_fill(color = palette_urbn_magenta[2])
+      ),
+    locations = cells_body(
+      columns = "name"
+  ))
+
+
+```
+
+<br> And imagine that the partially synthetic released data looks like this:
+
+```{r echo = FALSE}
+starwars |> 
+  select(homeworld, species, skin_color) |> 
+  head() |> 
+  create_table()
+```
+
+<br>
+
+Note that the released partially synthetic data does not have names. But using some basic matching rules in combination with the external data, an attacker is able to identify the following potential matches for Jar Jar Binks and R2D2, two characters in the Starwars universe:
+
+```{r , echo = FALSE}
+potential_jar_jar_matches <- starwars |> 
+  select(homeworld, species, skin_color) |>
+  filter(homeworld == "Naboo", species == "Gungan") |> 
+  mutate(title = "Potential Jar Jar matches")
+
+potential_r2d2_matches <- starwars |> 
+  select(homeworld, species, skin_color) |>
+  filter(homeworld == "Naboo", species == "Droid") |> 
+  mutate(title = "Potential R2-D2 Matches")
+
+all_matches <- potential_jar_jar_matches |> 
+  bind_rows(potential_r2d2_matches)
+
+all_matches |> 
+  group_by(title) |> 
+  create_table() 
+
+# todo color in cells by true matches
+```
+
+<br>
+
+And since we are the data maintainers, we can take a look at the confidential data and know that the highlighted rows are "true" matches.
+
+```{r, echo = FALSE}
+all_matches |> 
+  group_by(title) |> 
+  create_table() |> 
+  tab_style(
+    style = list(
+      cell_fill(color = palette_urbn_magenta[2])
+      ),
+    locations = cells_body(
+      rows = skin_color == "orange" | skin_color == "white, blue")
+  )
+```
+
+<br>
+
+These matches above are counted in various ways to evaluate identity disclosure risk. Below are some of those specific metrics. Generally for a good synthesis, we want a low expected match rate and true match rate, and a high false match rate.
+
+<br>
+
+::: {.panel-tabset}
+
+#### Expected Match Rate
+
+-   **Expected Match Rate**: On average, how likely is it to find a "correct" match among all potential matches? Essentially, the expected number of observations in the confidential data expected to be correctly matched by an intruder.
+
+    -   Higher expected match rate = higher identification disclosure risk.
+
+    -   The two other risk metrics below focus on the subset of confidential records for which the intruder identifies a single match.
+
+    -   In our example, this is $\frac{1}{3} + 1 = 1.333$.
+
+<br> <br>
+
+#### True Match Rate
+
+-   **True Match Rate**: The proportion of true unique matches among all confidential records. Higher true match rate = higher identification disclosure risk.
+
+-   Assuming there are 100 rows in the confidential data in our example, this is $\frac{1}{100} = 1\%$. <br> <br> <br> <br> <br> <br>
+
+#### False Match Rate
+
+-   **False Match Rate**: The proportion of false matches among the set of unique matches. Lower false match rate = higher identification disclosure risk.
+
+-   In our example, this is $\frac{0}{1} = 0\%$.
+
+<br> <br> <br> <br> <br> <br>
+
+:::
+
+## Attribute Disclosure risk metrics
+
+-   We were able to learn about Jar Jar and R2D2 by re-identifying them in the data. It is possible to learn confidential attributes without perfectly re-identifying observations in the data.
+
+### Predictive Accuracy
+
+::: {.callout-tip}
+## Predictive Accuracy
+
+Predictive accuracy measures how well an attacker can learn about attributes in the confidential data using the synthetic data (and possibly external data). 
+
+:::
+
+-   Similar to above, you start by matching synthetic records to confidential records. Alternatively, you can build a predictive model using the synthetic data to make predictions on the confidential data. 
+
+-   **key variables**: Variables that an attacker already knows about a record and can use to match.
+
+-   **target variables**: Variables that an attacker wishes to know more or infer about using the synthetic data.
+
+-   Pick a sensitive variable in the confidential data and use the synthetic data to make predictions. Evaluate the accuracy of the predictions.
+
+<br><br>
+
+### Membership Inference Tests
+
+::: {.callout-tip}
+## Memebership Inference Test
+
+**Membership inference tests** explore how well an attacker can determine if a given observations was in the training data for the synthetic data. 
+
+:::
+
+-   Why is this important? Sometimes membership in a synthetic dataset is also confidential (e.g., a dataset of HIV positive patients or people who have experienced homelessness).
+
+-   Also particularly useful for fully synthetic data where identity disclosure and attribute disclosure metrics don't really make a lot of sense.
+
+-   Assumes that attacker has access to a subset of the confidential data, and wants to tell if one or more records was used to generate the synthetic data.
+
+-   Since we as data maintainers know the true answers, we can evaluate whether the attackers guess is true and can break it down many ways (e.g., true positives, true negatives, false positives or false negatives).
+
+![](images/membership_inference_tests.png){width="688"}
+
+source for figure: @mendelevitch2021fidelity
+
+-   The "close enough" threshold is usually determined by a custom distance metric, like edit distance between text variables or numeric distance between continuous variables.
+
+-   Often you will want to choose different distance thresholds and evaluate how your results change.
+
+
+### Copy Protection
+
+::: {.callout-tip}
+## Copy Protection Metrics
+
+**Copy protection metrics** measure how often the synthesizer memorizes or inadvertantly duplicates confidential records. 
+
+:::
+
+-   ***Distance to Closest record***: Measures distance between each real record ($r$) and the closest synthetic record ($s_i$), as determined by a distance calculation.
+
+-   Many common distance metrics used in the literature including Euclidean distance, cosine distance, Gower distance, or Hamming distance [@mendelevitch2021fidelity].
+
+-   Goal of this metric is to easily expose exact copies or simple perturbations of the real records that exist in the synthetic dataset.
+
+```{r, echo = FALSE, fig.height = 3}
+set.seed(123)
+df <- tibble(
+  dist = rnorm(n = 100, mean = 3, sd = 1)
+)
+
+df <- df |> 
+  mutate(dist2 = c(rnorm(n = 75, mean = 3, sd = 1), rep(0, 25)))
+
+good_synth <- df |> 
+  ggplot() + 
+  geom_histogram(aes(x = dist), binwidth = 0.4, fill = "steelblue") +
+  labs(x = "DCR", y = "Count", title = "Mostly large DCR scores")
+
+bad_synth <- df |> 
+  ggplot() + 
+  geom_histogram(aes(x = dist2), binwidth = 0.4, fill = "steelblue") +
+  labs(x = "DCR", y = "Count", title = "Lots of 0 DCR scores")
+
+good_synth
+```
+
+
+```{r,echo = FALSE, fig.height = 3}
+bad_synth
+```
+
+-   Note that having DCR = 0, doesn't necessarily mean a high disclosure risk because in some datasets the "space" spanned by the variables in scope is relatively small.
+
+<br><br>
+
+### Hold Out Data
+
+::: {.callout-tip}
+## Holdout Data
+
+Membership inference tests and copy protection metrics are informative but lack context. When possible, create a holdout data set similar to the training data. Then calculate membership inference tests and copy protections metrics replacing the synthetic data with the hold out data. The results are useful for benchmarking the original membership inference tests and copy protection metrics.
+:::
+
+## Exercise 4: Disclosure Metrics
+
+::: {.panel-tabset}
+
+### Exercise 4
+
+::: {#fig-grades layout-ncol=2}
+
+```{r, echo = FALSE}
+#| fig-cap: Attacker Information
+
+potential_matches <- tribble(~Name, ~Year, ~Elective,
+                              "Adam",	"2009", "Chorus",
+                              "Betsy",	"2010",	"Band")
+
+potential_matches |> 
+  create_table()
+```
+
+```{r, echo = FALSE}
+#| fig-cap: Partially Synthetic Data
+
+potential_matches <- tribble(~Year, ~Elective, ~`Synthetic SAT`,
+                             "2008", "Chorus", 1100,
+                             "2008", "Chorus", 1420,
+                             "2009", "Chorus", 900,
+                             "2009", "Band", 1100,
+                             "2010", "Band", 1420,
+                             "2010", "Band", 900,
+                             "2010", "Band", 1200)
+
+potential_matches |> 
+  create_table()
+```
+
+Attacker information and partially synthetic data
+
+:::
+
+* *Are there any matches for Adam?*
+* *Are there any matches for Betsy?*
+* *What risks are created by the release?*
+
+### Exercise 4 Notes
+
+::: {#fig-grades2 layout-ncol=2}
+
+```{r, echo = FALSE}
+#| fig-cap: Attacker Information
+
+potential_matches <- tribble(~Name, ~Year, ~Elective,
+                              "Adam",	"2009", "Chorus",
+                              "Betsy",	"2010",	"Band")
+
+potential_matches |> 
+  create_table()
+```
+
+```{r, echo = FALSE}
+#| fig-cap: Partially Synthetic Data
+
+potential_matches <- tribble(~Year, ~Elective, ~`Synthetic SAT`,
+                             "2008", "Chorus", 1100,
+                             "2008", "Chorus", 1420,
+                             "2009", "Chorus", 900,
+                             "2009", "Band", 1100,
+                             "2010", "Band", 1420,
+                             "2010", "Band", 900,
+                             "2010", "Band", 1200)
+
+potential_matches |> 
+  create_table() |> 
+  tab_style(cell_fill(color = palette_urbn_main["magenta"], alpha = 0.3), 
+                    locations = cells_body(rows = 3)) |>
+    tab_style(cell_fill(color = palette_urbn_main["yellow"], alpha = 0.3), 
+                    locations = cells_body(rows = 5:7))
+```
+
+Attacker information and partially synthetic data
+
+:::
+
+* *Are there any matches for Adam?*
+
+Using `Year` and `Elective` as key variables, Adam has a unique match (highlighted in pink)
+
+* *Are there any matches for Betsy?*
+
+Using `Year` and `Elective` as key variables, Betsy has a three matches (highlighted in yellow)
+
+* *What risks are created by the release?*
+
+It is tough to say without context but here are a few considerations:
+
+* Is SAT easily observable outside of the data?
+* Are the values of `Synthetic SAT` close to the true values for `SAT`?
+* Are `SAT` and `Synthetic SAT` likely to be close under random guessing because it has low sample variance?
+
+:::
+
+<br><br><br><br>
+
+# Case Studies
+
+## Fully Synthetic PUF for IRS Non-Filers [@bowen2020synthetic]
+
+* **Data:** A 2012 file of "non-filers" created by the IRS Statistics of Income Division.
+* **Motivation:** Non-filer information is important for modeling certain tax reforms and this was a proof-of-concept for a more complex file.
+* **Methods:** Sequential CART models with additional noise added based on the sparsity of nearby observations in the confidential distribution. 
+* **Important metrics:**
+    * General utility: Proportions of non-zero values, first four moments, correlation fit
+    * Specific utility: Tax microsimulation, regression confidence interval overlap
+    * Disclosure: Node heterogeneity in the CART model, rates of recreating observations
+* **Lessons learned:**
+    * Synthetic data can work well for tax microsimulation. 
+    * It is difficult to match certain utility metrics for sparse variables.
+
+## Fully Synthetic SIPP data [@benedetto2018creation]
+
+* **Data:** Survey of Income and Program Participation linked to administrative longitudinal earnings and benefits data from IRS and SSA.
+* **Motivation:** To expand access to detailed economic data that is highly restricted without heavy disclosure control. 
+* **Methods:** Sequential regression multiple imputation (SRMI) with OLS regression, logistic regression, and Bayesian bootstrap. They released four implicates of the synthetic data.
+* **Important metrics:**
+    * General utility: pMSE
+    * Specific utility: None
+    * Disclosure: Distance based re-identification, RMSE of the closest record to measure attribute disclosure
+* **Lessons learned:**
+    * One of the first major synthetic files in the US.
+    * The file includes complex relationships between family members that are synthesized. 
+    
+## Partially Synthetic Geocodes [@drechsler2021synthesizing]
+
+* **Data:** Integrated Employment Biographies (German administrative data) with linked geocodes (latitude and longitude) 
+* **Motivation:** Rich geographic information can be used to answer many important labor market research questions. This data would otherwise would be too sensitive to release, due to the possibility of identifying an individual based on the combination of their location and other attributes.
+* **Methods:** CART with categorical geocodes. Also evaluated CART with continuous geocodes and a Bayesian latent class model.
+* **Important metrics:**
+    * General utility: Relative frequencies of cross tabulations
+    * Specific utility: Zip Code comparisons of tabulated variables, Ripley's K- and L-functions
+    * Disclosure: Probabilities of re-identification (Reiter and Mitra, 2009) -> comparison of expected match risk and the true match rate
+* **Lessons learned:**
+    * The synthetic data with geocodes had more measured disclosure risk than the original data. 
+    * Synthesizing more variables made a huge difference in the measured disclosure risks.
+    * Adjusting CART hyperparameters was not an effective way to manage the risk-utility tradeoff. 
+    * They stratified the data before synthesis for computational reasons. 
+
+<br><br><br>
+
+# Suggested Reading
+
+Snoke, Joshua, Gillian M Raab, Beata Nowok, Chris Dibben, and Aleksandra Slavkovic. 2018b. “General and Specific Utility Measures for Synthetic Data.” Journal of the Royal Statistical Society: Series A (Statistics in Society) 181 (3): 663–88.
+
+Bowen, Claire McKay, Victoria Bryant, Leonard Burman, Surachai Khitatrakun, Robert McClelland, Philip Stallworth, Kyle Ueyama, and Aaron R Williams. 2020. “A Synthetic Supplemental Public Use File of Low-Income Information Return Data: Methodology, Utility, and Privacy Implications.” In International Conference on Privacy in Statistical Databases, 257–70. Springer.
+
+
+# References
