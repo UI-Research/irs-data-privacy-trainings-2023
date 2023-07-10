@@ -258,7 +258,7 @@ Instead, we often decompose a joint distribution into a marginal distribution an
 
 -   **Categorical variables:** frequencies, relative frequencies
 
--   **Numeric variables** means, standard deviations, skewness, kurtosis (i.e. first four moments), percentiles, and number of zero/non-zero values
+-   **Numeric variables** means, standard deviations, skewness, kurtosis (i.e., first four moments), percentiles, and number of zero/non-zero values
 
  ![](images/puf_mean_example.png){width="469"}![](images/compare_sds.png){width="436"}
 
@@ -335,7 +335,7 @@ compare_penguins |>
 **Correlation fit** measures how well the synthesizer recreates the linear relationships between variables in the confidential dataset.
 :::
 
--   Create correlation matrices for the synthetic data and confidential data. Then measure differences across synthetic and actual data. Those differences are often summarized across all variables using [L1](https://en.wikipedia.org/wiki/Taxicab_geometry) or L2 distance. 
+-   Create correlation matrices for the synthetic data and confidential data. Then measure differences across synthetic and actual data. Those differences are often summarized across all variables using [L1](https://en.wikipedia.org/wiki/Taxicab_geometry) or [L2](https://en.wikipedia.org/wiki/Euclidean_distance) distance. 
 
 ![corrdiff](images/puf_correlation_fit_example.png){#fig-corrdiff}
 
@@ -352,7 +352,7 @@ $$MAE_{dist} = \frac{1}{6} \left(|-0.15| + |0.01| + |0.1| + |-0.15| + |0.15| + |
 ::: {.callout-tip}
 ## Discriminant Based Methods
 
-**Discriminant based methods** measure well a predictive model can distinguish (i.e. discriminate) between records from the confidential and synthetic data. 
+**Discriminant based methods** measure well a predictive model can distinguish (i.e., discriminate) between records from the confidential and synthetic data. 
 :::
 
 -   The confidential data and synthetic data should theoretically be drawn from the same super population. 
@@ -376,9 +376,9 @@ A comparison of discriminant metrics on a good synthesis and a poor synthesis
 
 ### Calculating Discriminant Metrics
 
--   pMSE ratio, SPECKS, and AUC all require calculating propensity scores (i.e. the probability that a particular data point belongs to the confidential data) and start with the same step. 
+-   pMSE ratio, SPECKS, and AUC all require calculating propensity scores (i.e., the probability that a particular data point belongs to the confidential data) and start with the same step. 
 
-1)  *Combine the synthetic and confidential data. Add an indicator variable with 0 for the confidential data and 1 for the synthetic data*
+1)  *Combine the synthetic and confidential data. Add an indicator variable with 0 for the confidential data and 1 for the synthetic data.*
 
 ```{r, echo = FALSE}
   
@@ -400,7 +400,7 @@ x |>
 
 <br>
 
-2)  *Calculate propensity scores (i.e. probabilities for group membership) for whether a given row belong to the synthetic dataset.*
+2)  *Calculate propensity scores (i.e., probabilities for group membership) for whether a given row belong to the synthetic dataset.*
 
 ```{r, echo = FALSE}
 set.seed(1297)
@@ -427,7 +427,7 @@ x |>
 
 -   After doing steps 1) and 2) above:
 
-    3)  *Calculate expected probability, i.e. the share of synthetic data in the combined data.* In the cases where the synthetic and confidential datasets are of equal size, this will always be 0.5.
+    3)  *Calculate expected probability, i.e., the share of synthetic data in the combined data.* In the cases where the synthetic and confidential datasets are of equal size, this will always be 0.5.
 
         ```{r, echo = FALSE}
         set.seed(1297)
@@ -461,7 +461,7 @@ x |>
 
 -   **SPECKS**: **S**ynthetic data generation; **P**ropensity score matching; **E**mpirical **C**omparison via the **K**olmogorov-**S**mirnov distance. 
 
-After generating propensity scores (i.e. steps 1 and 2 from above), you:
+After generating propensity scores (i.e., steps 1 and 2 from above), you:
 
     3)  *Calculate the empirical CDF's of the propensity scores for the synthetic and confidential data, separately.*
 
@@ -477,7 +477,7 @@ After generating propensity scores (i.e. steps 1 and 2 from above), you:
 
 AUC is a common tool for evaluating classification models. High values for AUC are bad because they suggest the model can distinguish between confidential and synthetic observations. 
 
-After generating propensity scores (i.e. steps 1 and 2 from above),
+After generating propensity scores (i.e., steps 1 and 2 from above),
 
 ![](images/roc_curve.png){width="572"}
 
@@ -495,7 +495,7 @@ After generating propensity scores (i.e. steps 1 and 2 from above),
 
 ## Exercise 1: Calculating Utility Metrics
 
-Assume that you have a confidential dataset of the starwars data, which is named `conf_data` below. You have already synthesized a fully synthetic dataset, named `synth_data` based on the confidential data. The `conf_data` looks like:
+Assume that you have a confidential dataset of the `starwars` data, which is named `conf_data` below. You have already synthesized a fully synthetic dataset, named `synth_data` based on the confidential data. The `conf_data` looks like:
 
 ```{r, echo = FALSE}
 set.seed(134)
@@ -676,11 +676,11 @@ Identity disclosure metrics evaluate how often we correctly re-identify confiden
 
 ### Basic matching approaches
 
--   We start by making assumptions about the knowledge an attacker has (i.e. external publicly accessible data they have access to).
+-   We start by making assumptions about the knowledge an attacker has (i.e., external publicly accessible data they have access to).
 
--   For each confidential record, the data attacker identifies a set of partially synthetic records which they believe contain the target record (i.e. potential matches) using the external variables as matching criteria.
+-   For each confidential record, the data attacker identifies a set of partially synthetic records which they believe contain the target record (i.e., potential matches) using the external variables as matching criteria.
 
--   There are distance-based and probability-based algorithms that can perform this matching. This matching process could be based on exact matches between variables or some relaxations (i.e. matching continuous variables within a certain radius of the target record, or matching adjacent categorical variables).
+-   There are distance-based and probability-based algorithms that can perform this matching. This matching process could be based on exact matches between variables or some relaxations (i.e., matching continuous variables within a certain radius of the target record, or matching adjacent categorical variables).
 
 -   We then evaluate how accurate our re-identification process was using a variety of metrics.
 
@@ -726,7 +726,7 @@ starwars |>
 
 <br>
 
-Note that the released partially synthetic data does not have names. But using some basic matching rules in combination with the external data, an attacker is able to identify the following potential matches for Jar Jar Binks and R2D2, two characters in the Starwars universe:
+Note that the released partially synthetic data does not have names. But using some basic matching rules in combination with the external data, an attacker is able to identify the following potential matches for Jar Jar Binks and R2D2, two characters in the Star Wars universe:
 
 ```{r , echo = FALSE}
 potential_jar_jar_matches <- starwars |> 
@@ -782,7 +782,7 @@ These matches above are counted in various ways to evaluate identity disclosure 
 
     -   The two other risk metrics below focus on the subset of confidential records for which the intruder identifies a single match.
 
-    -   In our example, this is $\frac{1}{3} + 1 = 1.333$
+    -   In our example, this is $\frac{1}{3} + 1 = 1.333$.
 
 <br> <br>
 
@@ -790,13 +790,13 @@ These matches above are counted in various ways to evaluate identity disclosure 
 
 -   **True Match Rate**: The proportion of true unique matches among all confidential records. Higher true match rate = higher identification disclosure risk.
 
--   Assuming there are 100 rows in the confidential data in our example, this is $\frac{1}{100} = 1\%$ <br> <br> <br> <br> <br> <br>
+-   Assuming there are 100 rows in the confidential data in our example, this is $\frac{1}{100} = 1\%$. <br> <br> <br> <br> <br> <br>
 
 #### False Match Rate
 
 -   **False Match Rate**: The proportion of false matches among the set of unique matches. Lower false match rate = higher identification disclosure risk.
 
--   In our example, this is $\frac{0}{1} = 0\%$ 
+-   In our example, this is $\frac{0}{1} = 0\%$.
 
 <br> <br> <br> <br> <br> <br>
 
@@ -834,13 +834,13 @@ Predictive accuracy measures how well an attacker can learn about attributes in 
 
 :::
 
--   Why is this important? Sometimes membership in a synthetic dataset is also confidential (e.g. a dataset of HIV positive patients or people who have experienced homelessness).
+-   Why is this important? Sometimes membership in a synthetic dataset is also confidential (e.g., a dataset of HIV positive patients or people who have experienced homelessness).
 
 -   Also particularly useful for fully synthetic data where identity disclosure and attribute disclosure metrics don't really make a lot of sense.
 
--   Assumes that attacker has access to a subset of the confidential data, and wants to tell if one or more records was used to generate the synthetic data.
+-   Assumes that attacker has access to a subset of the confidential data and wants to tell if one or more records was used to generate the synthetic data.
 
--   Since we as data maintainers know the true answers, we can evaluate whether the attackers guess is true and can break it down many ways (e.g. true positives, true negatives, false positives or false negatives).
+-   Since we as data maintainers know the true answers, we can evaluate whether the attackers guess is true and can break it down many ways (e.g., true positives, true negatives, false positives or false negatives).
 
 ![](images/membership_inference_tests.png){width="688"}
 
