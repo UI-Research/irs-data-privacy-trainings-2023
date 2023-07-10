@@ -337,7 +337,7 @@ compare_penguins |>
 
 -   Create correlation matrices for the synthetic data and confidential data. Then measure differences across synthetic and actual data. Those differences are often summarized across all variables using [L1](https://en.wikipedia.org/wiki/Taxicab_geometry) or L2 distance. 
 
-![corrdiff](images/puf_correlation_fit_example.png){#fig-corrdiff}
+![Correlation Difference](images/puf_correlation_fit_example.png){#fig-corrdiff}
 
 * @fig-corrdiff shows the creation of a difference matrix. Let's summarize the difference matrix using mean absolute error. This will give us a sense of how off the average correlation will be in the synthetic data compared to the confidential data.
 
@@ -487,126 +487,159 @@ After generating propensity scores (i.e. steps 1 and 2 from above),
 
 :::
 
-
 -   Look at @fig-discriminant to see calculations for pMSE ratio, SPECKS, and AUC. 
 -   It is useful to look at [variable importance](https://topepo.github.io/caret/variable-importance.html) for predictive models when observing poor discriminant based metrics. Variable importance can help diagnose which variables are poorly synthesized. 
 
-<br> <br> <br> <br> <br> <br> <br> <br> <br> <br>
-
-## Exercise 1: Calculating Utility Metrics
-
-Assume that you have a confidential dataset of the starwars data, which is named `conf_data` below. You have already synthesized a fully synthetic dataset, named `synth_data` based on the confidential data. The `conf_data` looks like:
-
-```{r, echo = FALSE}
-set.seed(134)
-
-conf_data <- starwars |> 
-  select(gender, height, mass) |> 
-  tidylog::drop_na() |>
-  # Filter out one outlier mass value
-  filter(mass != 1358)
-
-conf_data |> 
-  head(2) |> 
-  add_row(gender = NA) |> 
-  create_table()
-```
-
-<br>
-
-And `synth_data` looks like:
-
-```{r, echo = FALSE}
-nrow_conf_data <- nrow(conf_data)
-
-synth_data <- tibble(
-  gender = sample(conf_data$gender, size = nrow_conf_data, replace = FALSE)
-)
-
-height_gender_model <- lm(height ~ gender, data = conf_data)
-height_gender_mass_model <- lm(mass ~ height + gender, data = conf_data)
-
-
-predicted_heights <- predict(height_gender_model, data = synth_data)
-predicted_masses <- predict(height_gender_mass_model, data = synth_data)
-
-synth_data <- synth_data |> 
-  mutate(
-    height = rnorm(n = nrow_conf_data,
-                   mean = predicted_heights,
-                   sd = sigma(height_gender_model)),
-  )
-
-synth_data <- synth_data |> 
-  mutate(
-    mass = rnorm(n = nrow_conf_data,
-                 mean = predicted_masses,
-                 sd = sigma(height_gender_mass_model)),
-  )
-
-synth_data |> 
-  head(2) |> 
-  add_row(gender = NA) |> 
-  create_table()
-
-conf_data <- conf_data |> 
-  mutate(
-    gender = if_else(gender == "masculine", 0, 1)
-  ) 
-
-synth_data <- synth_data |> 
-  mutate(
-    gender = if_else(gender == "masculine", 0, 1)
-  ) 
-
-```
-
-<br>
-Question 1: Calculate the correlation fit between the synthetic and confidential data. Fill in the blanks and run the code below.
-
-```{r, eval = FALSE}
-# Fill in the blanks below:
-
-# The cor() function can take in a dataframe and compute correlations 
-# between all columns in the dataframe and spit out a correlation matrix
-conf_data_correlations <- cor(###)
-synth_data_correlations <- cor(###)
-
-correlation_differences <- conf_data_correlations - synth_data_correlations
-
-# Correlation fit is the sum of the sqrt of the squared differences between each correlation in the difference matrix.
-cor_fit <- sum(sqrt( ### ^2))
-
-cor_fit
-
-```
-
-Question 2: Compare the univariate distributions for `mass` and `height` in the confidential and synthetic data using density plots. Fill in the blanks and run the code below.
-
-```{r, eval = FALSE}
-combined_data <- bind_rows("synthetic" = synth_data, 
-                          "confidential" = conf_data,
-                          .id = "type")
-
-# Create a density plot of the mass distributions
-combined_data |> 
-  ggplot(aes(x = ###,
-             fill = type,),
-         position = "dodge",
-         color = "white") +
-  geom_density(alpha = 0.4)
-
-# Create a density plot of the height distributions
-combined_data |> 
-  ggplot(aes(x = ###,
-             fill = type,),
-         position = "dodge",
-         color = "white") +
-  geom_density(alpha = 0.4)
-
-```
-
 <br><br><br><br>
+
+## Exercise 1: Using Utility Metrics
+
+::: {.panel-tabset}
+
+### Exercise 1
+
+Consider the following two syntheses of `x`. **Which synthesis do you think is better?**
+
+```{r}
+set.seed(20230710)
+bind_rows(
+  synth1 = tibble(
+    x_conf = rnorm(n = 1000),
+    x_synth = rnorm(n = 1000, mean = 0.2)
+  ),
+  synth2 = tibble(
+    x_conf = rnorm(n = 1000),
+    x_synth = rnorm(n = 1000, sd = 0.5)
+  ),
+  .id = "synthesis"
+) |>
+  pivot_longer(-synthesis, names_to = "variable") |>
+  ggplot(aes(x = value, color = variable)) +
+  stat_ecdf() +
+  facet_wrap(~ synthesis) +
+  scatter_grid()
+
+```
+
+**Both syntheses have issues? What do you think are the issues?**
+
+### Exercise 1 Notes
+
+Consider the following two syntheses of `x`. **Which synthesis do you think is better?**
+
+```{r}
+set.seed(20230710)
+bind_rows(
+  synth1 = tibble(
+    x_conf = rnorm(n = 1000),
+    x_synth = rnorm(n = 1000, mean = 0.2)
+  ),
+  synth2 = tibble(
+    x_conf = rnorm(n = 1000),
+    x_synth = rnorm(n = 1000, sd = 0.5)
+  ),
+  .id = "synthesis"
+) |>
+  pivot_longer(-synthesis, names_to = "variable") |>
+  ggplot(aes(x = value, color = variable)) +
+  stat_ecdf() +
+  facet_wrap(~ synthesis) +
+  scatter_grid()
+
+```
+
+**Both syntheses have issues? What do you think are the issues?**
+
+* We consider `synth1` to be slightly better than `synth2` based on the large vertical distances between the lines for `synth2`.
+* `synth1` looks to match the variance of the confidential data but the mean is a little to high. `synth2` matches the mean, but it contains far too little variance. There aren't enough observations in the tails of the synthetic data.
+
+:::
+
+## Exercise 2: Correlation Difference
+
+::: {.panel-tabset}
+
+### Exercise 2
+
+Consider the following correlation matrices:
+
+```{r}
+#| echo: false
+
+print("Synthetic")
+mat_synth <- matrix(
+  c(
+    c(1, 0.5, 0.75),
+    c(0.5, 1, 0.8),
+    c(0.75, 0.8, 1)
+  ),
+  byrow = TRUE,
+  nrow = 3
+)
+mat_synth
+
+print("Confidential")
+mat_conf <- matrix(
+  c(
+    c(1, 0.35, 0.1),
+    c(0.35, 1, 0.9),
+    c(0.1, 0.9, 1)
+  ),
+  byrow = TRUE,
+  nrow = 3
+)
+mat_conf
+
+```
+
+* Construct the difference matrix
+* Calculate MAE
+* Optional: Calculate RMSE
+* Optional: What is the main difference between MAE and RMSE?
+
+### Exercise 2 Notes
+
+```{r}
+#| echo: false
+
+print("Synthetic")
+mat_synth
+
+print("Confidential")
+mat_conf
+
+```
+
+* Construct the difference matrix
+
+```{r}
+diff <- mat_synth - mat_conf
+
+diff[!lower.tri(diff)] <- NA
+
+diff
+
+```
+
+* Calculate MAE
+
+```{r}
+mean(abs(diff[lower.tri(diff)]))
+
+```
+
+* Optional: Calculate RMSE
+
+```{r}
+mean(diff[lower.tri(diff)] ^ 2)
+
+```
+
+* Optional: What is the main difference between MAE and RMSE?
+
+RMSE gives extra weight to large errors because it squares values instead of using absolute values. We like to think of this as the difference between the mean and the median error.
+
+:::
 
 # Specific Utility Metrics
 
@@ -655,6 +688,80 @@ It is common the compare intervals from linear regression models and logistic re
 -   @fig-microsim compares distributional output from baseline runs. It is also useful to compare tax reforms on the confidential and synthetic data.
 
 <br><br><br><br>
+
+## Exercise 3: SSO
+
+::: {.panel-tabset}
+
+### Exercise 3
+
+Suppose we are interested in the following null and alternative hypotheses:
+
+$$H_0: \mu = 0$$
+
+$$H_a: \mu \ne 0$$
+
+Consider the following output:
+
+```{r}
+#| echo: false
+
+set.seed(20230709)
+
+x_conf <- rnorm(20, mean = 3)
+
+print(paste("Confidential Mean:", mean(x_conf)))
+
+print("Confidendital Confidence Interval")
+t.test(x_conf)$conf.int
+
+x_synth <- rnorm(20, mean = 2)
+
+print(paste("Synthetic Mean:", mean(x_synth)))
+
+print("Synthetic Confidence Interval")
+t.test(x_synth)$conf.int
+
+```
+
+Do the synthetic data achieve SSO match?
+
+### Exercise 3 Notes
+
+Suppose we are interested in the following null and alternative hypotheses:
+
+$$H_0: \mu = 0$$
+
+$$H_a: \mu \ne 0$$
+
+Consider the following output:
+
+```{r}
+#| echo: false
+
+set.seed(20230709)
+
+x_conf <- rnorm(20, mean = 3)
+
+print(paste("Confidential Mean:", mean(x_conf)))
+
+print("Confidendital Confidence Interval")
+t.test(x_conf)$conf.int
+
+x_synth <- rnorm(20, mean = 2)
+
+print(paste("Synthetic Mean:", mean(x_synth)))
+
+print("Synthetic Confidence Interval")
+t.test(x_synth)$conf.int
+
+```
+
+Do the synthetic data achieve SSO match?
+
+Yes! The confidence intervals overlap, the signs are the same, and the statistical significance is the same. 
+
+:::
 
 # Disclosure Risk Metrics
 
@@ -905,27 +1012,105 @@ bad_synth
 Membership inference tests and copy protection metrics are informative but lack context. When possible, create a holdout data set similar to the training data. Then calculate membership inference tests and copy protections metrics replacing the synthetic data with the hold out data. The results are useful for benchmarking the original membership inference tests and copy protection metrics.
 :::
 
-## Exercise 2: Disclosure Metrics
+## Exercise 4: Disclosure Metrics
 
-Following the same example with Jar Jar Binks above, let's assume that using external data an attacker was able to identify these 3 potential matches for Jar Jar Binks in the data. And because we have access to the confidential data, we know that the row in pink is a "correct" match. 
+::: {.panel-tabset}
+
+### Exercise 4
+
+::: {#fig-grades layout-ncol=2}
 
 ```{r, echo = FALSE}
-potential_matches <- tribble(~homeworld, ~species, ~skin_color,
-                              "Naboo",	"Gungan",	"green",
-                              "Naboo",	"Gungan",	"green",
-                              "Naboo",	"Gungan",	"grey")
+#| fig-cap: Attacker Information
+
+potential_matches <- tribble(~Name, ~Year, ~Elective,
+                              "Adam",	"2009", "Chorus",
+                              "Betsy",	"2010",	"Band")
+
+potential_matches |> 
+  create_table()
+```
+
+```{r, echo = FALSE}
+#| fig-cap: Partially Synthetic Data
+
+potential_matches <- tribble(~Year, ~Elective, ~`Synthetic SAT`,
+                             "2008", "Chorus", 1100,
+                             "2008", "Chorus", 1420,
+                             "2009", "Chorus", 900,
+                             "2009", "Band", 1100,
+                             "2010", "Band", 1420,
+                             "2010", "Band", 900,
+                             "2010", "Band", 1200)
+
+potential_matches |> 
+  create_table()
+```
+
+Attacker information and partially synthetic data
+
+:::
+
+* *Are there any matches for Adam?*
+* *Are there any matches for Betsy?*
+* *What risks are created by the release?*
+
+### Exercise 4 Notes
+
+::: {#fig-grades2 layout-ncol=2}
+
+```{r, echo = FALSE}
+#| fig-cap: Attacker Information
+
+potential_matches <- tribble(~Name, ~Year, ~Elective,
+                              "Adam",	"2009", "Chorus",
+                              "Betsy",	"2010",	"Band")
+
+potential_matches |> 
+  create_table()
+```
+
+```{r, echo = FALSE}
+#| fig-cap: Partially Synthetic Data
+
+potential_matches <- tribble(~Year, ~Elective, ~`Synthetic SAT`,
+                             "2008", "Chorus", 1100,
+                             "2008", "Chorus", 1420,
+                             "2009", "Chorus", 900,
+                             "2009", "Band", 1100,
+                             "2010", "Band", 1420,
+                             "2010", "Band", 900,
+                             "2010", "Band", 1200)
 
 potential_matches |> 
   create_table() |> 
   tab_style(cell_fill(color = palette_urbn_main["magenta"], alpha = 0.3), 
-                    locations = cells_body(rows = 3))
+                    locations = cells_body(rows = 3)) |>
+    tab_style(cell_fill(color = palette_urbn_main["yellow"], alpha = 0.3), 
+                    locations = cells_body(rows = 5:7))
 ```
 
-<br> 
+Attacker information and partially synthetic data
 
-Question 1: If an attacker randomly chooses one of these matches  to be Jar Jar Binks, what is the probability they will be right?
+:::
 
-Question 2: Assume that previously an attacker did not know the `skin_color` of Jar Jar Binks. Using this list of matches, what approaches could an attacker take to guess the skin_color of Jar Jar Binks? What is the accuracy of each of those approaches?
+* *Are there any matches for Adam?*
+
+Using `Year` and `Elective` as key variables, Adam has a unique match (highlighted in pink)
+
+* *Are there any matches for Betsy?*
+
+Using `Year` and `Elective` as key variables, Betsy has a three matches (highlighted in yellow)
+
+* *What risks are created by the release?*
+
+It is tough to say without context but here are a few considerations:
+
+* Is SAT easily observable outside of the data?
+* Are the values of `Synthetic SAT` close to the true values for `SAT`?
+* Are `SAT` and `Synthetic SAT` likely to be close under random guessing because it has low sample variance?
+
+:::
 
 <br><br><br><br>
 
