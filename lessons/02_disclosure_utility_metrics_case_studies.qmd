@@ -662,7 +662,7 @@ We now pivot to evaluating the disclosure risks of synthetic data.
 
 ## Identity Disclosure Metrics
 
-::: {.call-tip}
+::: {.callout-tip}
 ## Identity Disclosure Metrics
 
 Identity disclosure metrics evaluate how often we correctly re-identify confidential records in the synthetic data. 
@@ -972,6 +972,7 @@ Question 2: Assume that previously an attacker did not know the `skin_color` of 
     * Adjusting CART hyperparameters was not an effective way to manage the risk-utility tradeoff. 
     * They stratified the data before synthesis for computational reasons. 
 
+<br><br><br>
 
 # Suggested Reading
 
