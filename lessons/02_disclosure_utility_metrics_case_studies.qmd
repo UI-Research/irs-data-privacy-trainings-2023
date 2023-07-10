@@ -463,11 +463,11 @@ x |>
 
 After generating propensity scores (i.e. steps 1 and 2 from above), you:
 
-    3)  *Calculate the empirical CDF's of the propensity scores for the synthetic and confidential data, separately.*
+3)  *Calculate the empirical CDF's of the propensity scores for the synthetic and confidential data, separately.*
 
-    4)  *Calculate the Kolmogorov-Smirnov (KS) distance between the 2 empirical CDFs.* The KS distance is the maximum vertical distance between 2 empirical CDF distributions.
+4)  *Calculate the Kolmogorov-Smirnov (KS) distance between the 2 empirical CDFs.* The KS distance is the maximum vertical distance between 2 empirical CDF distributions.
 
-        ![](images/ks_distance.png){width="251"}
+![](images/ks_distance.png){width="251"}
 
 <br><br><br><br>
 
