@@ -551,7 +551,7 @@ bind_rows(
 **Both syntheses have issues? What do you think are the issues?**
 
 * We consider `synth1` to be slightly better than `synth2` based on the large vertical distances between the lines for `synth2`.
-* `synth1` looks to match the variance of the confidential data but the mean is a little to high. `synth2` matches the mean, but it contains far too little variance. There aren't enough observations in the tails of the synthetic data.
+* `synth1` looks to match the variance of the confidential data but the mean is a little too high. `synth2` matches the mean, but it contains far too little variance. There aren't enough observations in the tails of the synthetic data.
 
 :::
 
@@ -631,7 +631,7 @@ mean(abs(diff[lower.tri(diff)]))
 * Optional: Calculate RMSE
 
 ```{r}
-mean(diff[lower.tri(diff)] ^ 2)
+sqrt(mean(diff[lower.tri(diff)] ^ 2))
 
 ```
 
