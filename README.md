@@ -18,7 +18,7 @@ Materials for each part can be found at the links below.
 
 * [Part 1: Introduction to Data Privacy](https://ui-research.github.io/irs-data-privacy-trainings-2023/lessons/01_introduction_to_data_privacy)
 * [Part 2: Disclosure Risk and Utility Metrics and Synthetic Data Case Studies](https://ui-research.github.io/irs-data-privacy-trainings-2023/lessons/02_disclosure_utility_metrics_case_studies)
-* [Part 3: Introduction to Differential Privacy]()
+* [Part 3: Introduction to Differential Privacy](https://ui-research.github.io/irs-data-privacy-trainings-2023/lessons/03_introduction_to_differential_privacy)
 
 ## Appendices
 
