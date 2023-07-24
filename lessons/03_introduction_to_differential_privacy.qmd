@@ -1,0 +1,550 @@
+---
+title: "Introduction to Differential Privacy"
+date: today
+format:
+  html:
+    fig-cap-location: top
+    number_sections: false
+    embed-resources: true
+    code-fold: true
+    toc: true
+    css: ../www/web_report.css
+editor_options:
+  chunk_output_type: console
+execute:
+  warning: false
+  message: false
+bibliography: references.bib
+---
+
+```{=html}
+<style>
+@import url('https://fonts.googleapis.com/css?family=Lato&display=swap');
+</style>
+```
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato" />
+
+```{r header-image, fig.width = 5.14, fig.height = 1.46, echo = FALSE}
+# All defaults
+knitr::include_graphics(here::here('www', 'images', 'urban-institute-logo.png'))
+
+```
+
+```{r setup}
+#| label: setup
+#| echo: false
+
+options(scipen = 999)
+
+library(tidyverse)
+library(gt)
+library(palmerpenguins)
+library(urbnthemes)
+library(here)
+
+set_urbn_defaults()
+
+create_table <- function(data_df, 
+                         rowname_col = NA,
+                         fig_num = "",
+                         title_text = ""){
+  # random_id = random_id(n=10)
+  random_id = "urban_table"
+  
+  basic_table = data_df |> 
+    gt(id = random_id, rowname_col = rowname_col) |> 
+    tab_options(#table.width = px(760),
+      table.align = "left", 
+      heading.align = "left",
+      # TODO: Discuss with Comms whether border should extend across 
+      # whole row at bottom or just across data cells
+      table.border.top.style = "hidden",
+      table.border.bottom.style = "transparent",
+      heading.border.bottom.style = "hidden",
+      # Need to set this to transparent so that cells_borders of the cells can display properly and 
+      table_body.border.bottom.style = "transparent",
+      table_body.border.top.style = "transparent",
+      # column_labels.border.bottom.style = "transparent",
+      column_labels.border.bottom.width = px(1),
+      column_labels.border.bottom.color = "black",
+      # row_group.border.top.style = "hidden",
+      # Set font sizes
+      heading.title.font.size = px(13),
+      heading.subtitle.font.size = px(13),
+      column_labels.font.size = px(13),
+      table.font.size = px(13),
+      source_notes.font.size = px(13),
+      footnotes.font.size = px(13),
+      # Set row group label and border options
+      row_group.font.size = px(13),
+      row_group.border.top.style = "transparent",
+      row_group.border.bottom.style = "hidden",
+      stub.border.style = "dashed",
+    ) |> 
+    tab_header(
+      title = fig_num,# "eyebrow",
+      subtitle = title_text) |>  #"Top 10 Banks (by Dollar Volume) for Community Development Lending") |> 
+    # Bold title, subtitle, and columns
+    tab_style(
+      style = cell_text(color = "black", weight = "bold", align = "left"),
+      locations = cells_title("subtitle")
+    ) |> 
+    tab_style(
+      style = cell_text(color = "#696969", weight = "normal", align = "left", transform = "uppercase"),
+      locations = cells_title("title")
+    ) |> 
+    tab_style(
+      style = cell_text(color = "black", weight = "bold", size = px(13)),
+      locations = cells_column_labels(gt::everything())
+    ) |> 
+    # Italicize row group and column spanner text
+    tab_style(
+      style = cell_text(color = "black", style = "italic", size  = px(13)),
+      locations = gt::cells_row_groups()
+    ) |> 
+    tab_style(
+      style = cell_text(color = "black", style = "italic", size  = px(13)),
+      locations = gt::cells_column_spanners()
+    ) |> 
+    opt_table_font(
+      font = list(
+        google_font("Lato"),
+        default_fonts()
+      )
+    ) |> 
+    # Adjust cell borders for all cells, small grey bottom border, no top border
+    tab_style(
+      style = list(
+        cell_borders(
+          sides = c("bottom"),
+          color = "#d2d2d2",
+          weight = px(1)
+        )
+      ),
+      locations = list(
+        cells_body(
+          columns =  gt::everything()
+          # rows = gt::everything()
+        )
+      )
+    )  |>
+    tab_style(
+      style = list(
+        cell_borders(
+          sides = c("top"),
+          color = "#d2d2d2",
+          weight = px(0)
+        )
+      ),
+      locations = list(
+        cells_body(
+          columns =  gt::everything()
+          # rows = gt::everything()
+        )
+      )
+    )  |>
+    # Set missing value defaults
+    fmt_missing(columns = gt::everything(), missing_text = "...") |>
+    # Set css for all the things we can't finetune exactly in gt, mostly t/r/b/l padding
+    opt_css(
+      css = str_glue("
+      #{random_id} .gt_row {{
+        padding: 5px 5px 5px 5px;
+      }}
+      #{random_id} .gt_sourcenote {{
+        padding: 16px 0px 0px 0px;
+      }}
+      #{random_id} .gt_footnote {{
+        padding: 16px 0px 0px 0px;
+      }}
+      #{random_id} .gt_subtitle {{
+        padding: 0px 0px 2px 0px;
+      }}
+      #{random_id} .gt_col_heading {{
+        padding: 10px 5px 10px 5px;
+      }}
+      #{random_id} .gt_col_headings {{
+        padding: 0px 0px 0px 0px;
+        border-top-width: 0px;
+      }}
+      #{random_id} .gt_group_heading {{
+        padding: 15px 0px 0px 0px;
+      }}
+      #{random_id} .gt_stub {{
+        border-bottom-width: 1px;
+        border-bottom-style: solid;
+        border-bottom-color: #d2d2d2;
+        border-top-color: black;
+        text-align: left;
+      }}
+      #{random_id} .gt_grand_summary_row {{
+        border-bottom-width: 1px;
+        border-top-width: 1px;
+        border-bottom-style: solid;
+        border-bottom-color: #d2d2d2;
+        border-top-color: #d2d2d2;
+      }}
+      #{random_id} .gt_summary_row {{
+        border-bottom-width: 1px;
+        border-top-width: 1px;
+        border-bottom-style: solid;
+        border-bottom-color: #d2d2d2;
+      }}
+      #{random_id} .gt_column_spanner {{
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }}
+      ") |> as.character()
+    )
+  
+  return(basic_table)
+}
+```
+
+<br>
+
+# Recap
+In the last session, we discussed general and specific utility metrics for evaluating synthetic data.
+
+  - General utility metrics include summary statistics, correlation fit, and discriminant based methods such as the pMSE ratio.
+  
+  - Specific utility metrics include regression confidence interval overlap and microsimulation results.
+  
+We also discussed disclosure risk evaluation, including metrics for identity disclosure, attribute disclosure, and other metrics such as membership inference tests and copy protection metrics.
+
+A common theme throughout this lesson was that many of these metrics require judgement calls on the part of the data stewards, e.g.:
+  
+  - What should be considered a "good" pMSE ratio score for a synthetic dataset? Does this change in the context of the domain?
+  
+  - How much disclosure risk is "too much"? Are there types of disclosure risk data users can tolerate more than others?
+  
+  - When evaluating disclosure risk, are we making assumptions about how the attacker will approach the data or resources the attacker has access to? Do these assumptions hold in the context of the domain?
+  
+**Motivation for today:** what if we could create a mathematical bound on the disclosure risk for any question asked of the confidential data?
+
+In this session, we will cover a high-level overview of formal privacy, differential privacy, and formally private mechanisms. This summary will involve some mathematical intuition and present some mathematical equations.
+
+<br>
+
+# Formal Privacy
+After reviewing the previous session, several questions have arisen:
+
+  - What level of disclosure risk should be considered acceptable, and what type?
+
+  - When assessing disclosure risk, what assumptions can be made about the methods or approach a potential data intruder may employ?
+
+  - How do we account for the resources that a data intruder could potentially access?
+
+  - Do these assumptions hold within the context of the specific real-world application?
+
+Addressing these questions is why applying statistical disclosure control (SDC) methods is difficult. When developing a SDC method, privacy researchers must predict how a data intruder might attack the data, considering what sensitive information they want and what resources they have now or in the *future*. 
+
+**Formal privacy** did away with those assumptions. It provides a mathematical bound on the disclosure risk for any statistic applied to the confidential data. Although methods developed within the formal privacy framework are considered SDC methods, data privacy researchers often separate formal privacy from other SDC methods. We will refer to the SDC methods and disclosure risk measures not developed under formal privacy as **traditional SDC methods** and **traditional disclosure risk definitions**.
+
+<br>
+
+## Definition of Formal Privacy
+
+Although the privacy community has not fully agreed on a common definition, the U.S. Census Bureau[^1] defines **formal privacy** as a subset of SDC methods that give "formal and quantifiable guarantees on inference disclosure risk and known algorithmic mechanisms for releasing data that satisfy these guarantees."
+
+[^1]: “Consistency of data products and formally private methods for the 2020 census,” US Census Bureau, p. 43, https://irp.fas.org/agency/dod/jason/census-privacy.pdf
+
+Traits of formally private mechanisms include the following: 
+
+- Ability to quantify and adjust the privacy-utility trade-off, typically through parameters. 
+
+- Ability to rigorously and mathematically prove the maximum privacy loss that can result from the release of information [@bowen2021philosophy]. 
+
+- Formal privacy definitions also allow one to **compose** multiple statistics. In other words, a data curator can compute the total privacy loss from multiple individual information releases [@bowen2021philosophy]. 
+
+::: {.callout-tip}
+## Note on terminology
+In the formal privacy literature, privacy researchers often use the terms mechanism, algorithm, and method interchangeably to describe the process of releasing a private statistical output. Sometimes these researchers refer to a simple process, such as adding noise directly to a computed statistic. Other times they refer to more complicated processes, such as post-processing (explained later in this section). We do not see a clear delineation in the literature when using the three terms. More crucially is that anything referred to as a formally private method, formally private mechanism, or formally private algorithm must provably satisfy the relevant definition of formal privacy.
+:::
+
+<br>
+
+## Data Products
+
+In most of the cases we've discussed so far, the released data product is a full dataset. However, a spectrum of data products could be released by a data curator after applying privacy methods. Here are a list examples of possible data products that a data curator could release after applying SDC methods, roughly from most to least detailed:
+
+- microdata (e.g., public use microdata series or PUMS) 
+- summary tables (e.g., American Community Survey tables) 
+- summary statistics (e.g., multiple statistics on income in a state) 
+- single statistics (e.g., maximum age in a county) 
+
+Curators could release one of these products after applying a data privacy method, or they could release them "on demand," to answer different questions using the data. 
+
+- Questions asked of the data are referred to in computer science terminology as **queries** which are **statistics**. 
+
+- The below image shows how the on-demand (or interactive) version of this process might work, with a user asking a question of the confidential data and receiving an answer that has been manipulated with algorithm $\mathcal{A}$. 
+
+  - Note that while in the example the statistic in question is a single number, any of the above data products are available as potential output.
+
+![](images/lesson-04-interactive.png)
+
+- Curators must consider how much noise should be added and how many statistics should be made available.
+
+- If too many questions are answered with enough accuracy, all the data could be compromised, so the type and number of questions asked of the data are limited by the curators [@bowen2021philosophy].
+
+The main difference between traditional SDC methods and formally private methods is the ability to account for all information being "leaked" from the confidential data. We can think of traditional SDC methods as someone charging a limitless credit card; formally private methods are when someone charges to a debit card with a set budget. In both scenarios, there is a running bill, but only one requires constantly checking the balance. We can easily imagine that not tracking that bill is the equivalent of releasing too many statistics with enough accuracy, which could compromise the confidential data [@bowen2021philosophy]. Although data stewards must limit the type and number of questions asked of the data in both traditional and formal privacy settings, they are faced with “tracking the bill” under a formal privacy framework.
+
+<br>
+
+## Differential Privacy
+
+**Differential privacy (DP)** is just one type of formal privacy. 
+
+- DP is a strict mathematical definition that a method must satisfy (or meet the mathematical conditions) to be considered differentially private, not a statement or description of the data itself.
+
+- Informally, DP does not make assumptions about how a data intruder will attack the data and the amount of external information or computing power an actor has access to, now or in the future.
+
+![](images/lesson-04-privacy-guarantee.png)
+
+- Curators control the strength of this privacy guarantee by adjusting the privacy loss budget.
+
+<br>
+
+## Privacy Loss Budget
+
+Formal privacy uses the concept of a **privacy loss budget**, typically represented mathematically as $\epsilon$. The privacy loss budget bounds the disclosure risk associated with releasing data or statistics [@us2021disclosure].
+
+::: {.callout-tip}
+## Note on the privacy loss parameter
+There are many other privacy loss parameters, but we will use  $\epsilon$ here as a general representation of the privacy loss budget for simplicity.
+:::
+
+The privacy loss budget can be thought of as a knob that adjusts the trade-off between data privacy and utility. Some things to keep in mind about the privacy loss budget are as follows: 
+
+- The data curator must decide the privacy loss budget (i.e., the total amount of $\epsilon$) before the release of any data or statistic. Like a real budget, when privacy loss budget is exhausted, no more information from the confidential data is released.
+
+- A larger value of $\epsilon$ increases the maximum disclosure risk (i.e., the upper bound of the disclosure risk) associated with a given release of information. Simply put,
+
+  - larger $\epsilon$ = less noise potentially added to a statistic = more accuracy, but less privacy, and 
+  
+  - smaller $\epsilon$ = more noise potentially added to a statistic = less accuracy, but more privacy.
+  
+![](images/dp-flowers.png)
+
+- Extreme cases (note that these cases are not realistic in the sense of real-world applications, but are presented to demonstrate the intuition):
+
+  - $\epsilon \to \infty$
+    - all privacy will be lost; data retains all utility, but no privacy
+    - $\epsilon = \infty$ would indicate that no noise is added and the confidential data is released
+    
+  - $\epsilon \to 0$
+    - no privacy is lost; data is completely distorted and no utility remains
+    - $\epsilon = 0$ would indicate that no data is released
+
+::: {.callout-tip}
+## A key takeaway
+Disclosure risk can be adjusted by adjusting the privacy loss budget, but not eliminated. Adjusting the privacy loss budget is really about adjusting the strength of the privacy guarantee made by formal privacy.
+:::
+
+<br>
+
+## Who sets the privacy loss budget?
+
+- This is very much still an open question, with implications for data stewards, researchers, data users, and policymakers.
+
+- Although policymakers are the most equipped to understand consequences of privacy loss, they are likely the least equipped to understand what $\epsilon$ means.
+
+<br> <br>
+
+# Exercise 1 {.tabset .tabset-pills}
+
+::: {.panel-tabset}
+
+## Exercise 1
+
+Imagine you are in charge of safeguarding a dataset against an intruder. Brainstorm and discuss **features of the intruder** that you would consider a "worst-case scenario" in terms of privacy (short of the intruder having access to the entire confidential dataset).
+
+
+## Exercise 1 Hints
+
+- How much computational power might they have?
+- Might they have access to other information about the observations?
+- Might they have access to other, supplemental datasets?
+:::
+
+<br>
+
+# Formal Privacy Features
+
+Formal privacy is a relatively new set of definitions for quantifying the worst-case amount of information disclosed from statistics calculated on a private database. We provide conceptual and mathematical definitions below.
+
+::: {.panel-tabset}
+
+## Assumptions Underlying Privacy Guarantee
+
+Formal privacy does not make assumptions about:
+
+- how a data intruder will attack the data;
+
+- the amount of external information or computing power an intruder has access to, now or in the future;
+
+- which information in the data poses a higher disclosure risk [@near2020differential].
+
+Instead, formal privacy assumes the worst-case scenario:
+
+- the intruder has information on every observation except one;
+  
+- the intruder has unlimited computational power;
+  
+- missing observation is the most extreme possible observation (or an extreme outlier) that could alter the statistic.
+
+## Mathematical Definition
+We mathematically define several formally private definitions and key theorems. We use the following notation: $X\in\mathbb{R}^{n\times r}$ is the confidential data set representing $n$ data points and $r$ variables and $M:\mathbb{R}^{n\times r}\rightarrow\mathbb{R}^k$ denotes the statistical query, i.e., $M$ is a function mapping $X$ to $k$ real numbers. We denote a randomized or noisy version of $M$ using $\mathcal{M}:\mathbb{R}^{n\times r}\rightarrow\mathbb{R}^k$, which is a function that satisfies a formally private definition.
+
+DP is the most widely known formal privacy definition. Privacy experts often refer to the original definition of DP as pure-DP or $\epsilon$-DP.
+
+**Differential Privacy** [@dwork2006calibrating]: A sanitization algorithm, $\mathcal{M}$, satisfies $\epsilon$-DP if for all subsets $S\subseteq Range(\mathcal{M})$ and for all $X,X'$ such that $d(X,X')=1$, \begin{equation}\label{eqn:dp}
+      \frac{\Pr(\mathcal{M}( X) \in S)}{ \Pr(\mathcal{M}( X')\in S)}\le \exp(\epsilon)
+  \end{equation} where $\epsilon>0$ is the privacy loss budget and $d(X,X')=1$ represents the possible ways that $X'$ differs from $X$ by one record.
+  
+:::
+
+::: {.callout-tip}
+## Features to note
+- $\epsilon$ is logarithmic.
+- This is an inequality, not an equation; $\epsilon$ is up to us to define and represents an upper bound for disclosure risk that we are comfortable with for our particular data.
+:::
+
+<br>
+
+## Global Sensitivity
+
+In addition to the privacy loss budget, most formally private methods rely on the concept called global sensitivity, which describes how resistant the formally private sanitizer is to the presence of outliers [@bowen2021philosophy]. We can think of the global sensitivity as another value that helps determine how much noise is needed to protect the released data or statistic, because some information is more sensitive than other information to outliers.
+
+::: {.panel-tabset}
+  
+### Conceptual Example
+
+Imagine the data we want to protect contains socioeconomic information and the question we want answered is, "What is the median wealth?" Under formal privacy, we must consider the change of the most extreme possible record that could exist in any given data that has demographic and financial information. In our example, that person is Elon Musk, who was the wealthiest person in the world in 2023.[^2] If Musk is present or absent in the data, the median wealth should not change too much. This means we can provide a more accurate answer by applying fewer alterations to the median income statistic, because it is less sensitive to the extreme outlier, Musk Consider, however, the question, "What is the average wealth?" Unlike the previous statistic, the answer would significantly change if Musk were present or absent from the data. To protect the extreme case at a given level of privacy loss, a formally private algorithm would need to provide a significantly less accurate answer by altering the statistic more.
+
+[^2]: At the time of session, Elon Musk is the wealthiest person in the world.
+
+### Mathematical Definition
+
+There are two different versions of global sensitivity: $l_1$-global sensitivity and $l_2$-global sensitivity.
+
+$l_1$-Global Sensitivity [@dwork2006calibrating]: For all $X,X'$ such that $d(X,X')=1$, the global sensitivity of a function $M$ is \begin{equation}\label{eqn:gs}
+        \Delta_1 (M)= \underset{d(X,X')=1}{\text{sup}} \|M(X)-M(X') \|_1 
+    \end{equation}
+
+The $l_1$-global sensitivity calculates the maximum amount a statistic can change in absolute value terms with the addition or removal of the most extreme possible observation. In contrast, $l_2$-global sensitivity calculates the maximum amount a statistic can change when the statistic is squared, summed, and rooted with the addition or removal of the most extreme possible observation. Global sensitivity is straightforward but calculating the global sensitivity for some statistics can be very difficult. For instance, we cannot calculate a finite global sensitivity of sample mean if we do not bound the variable.
+
+:::
+
+<br>
+
+## Important Theorems
+
+As mentioned earlier, DP requires methods to compose or account for the total privacy loss from each public data release or statistic. For example, composition or accounting allows the data curator to track the total privacy loss from multiple summary tables or multiple statistics requests from several data users. This is the main advantage of DP compared to traditional SDC methods, which cannot quantify the total privacy loss. There are two main composition theorems: sequential and parallel. We also cover another important theorem (post-processing) that is essential in developing formally private methods.
+
+### Sequential Composition Theorem
+
+![An Example of Sequential Composition](images/lesson05-sequential.png){#fig-seq-comp width=600}
+
+The sequential composition theorem allows the data users to calculate the privacy loss budget from multiple noisy statistics on the same part of the confidential data [@bun2016concentrated; @mcsherry2009privacy]. To help explain this concept, suppose we have establishment economic data set that reports the state of operation, the number of employees, and the average income for each establishment. We want to conduct three different analyses that cost $\epsilon_1=1$, $\epsilon_2=0.5$, and $\epsilon_3=0.5$, respectively. Since we are applying the three analyses on the entire data, sequential composition requires us to add up the individual privacy loss budgets for the total. i.e., $\epsilon_{total}=\epsilon_1+\epsilon_2+\epsilon_3=2$. @fig-seq-comp shows the application of sequential composition to our fictitious economic data set.
+
+### Parallel Composition Theorem
+
+![An Example of Parallel Composition](images/lesson05-parallel.png){#fig-para-comp width=600}
+
+The parallel composition theorem allows data users to calculate the privacy loss budget from multiple noisy statistics on different or disjoint parts of the confidential data [@bun2016concentrated; @mcsherry2009privacy]. Using the same example as before in @fig-seq-comp, suppose we apply three analyses to partitions of the data (i.e., the three different states) that cost $\epsilon_1=1$, $\epsilon_2=0.5$, and $\epsilon_3=0.5$, respectively. Since we are applying the three analyses on disjoint subsets of the data, parallel composition states that the total privacy loss budget is the maximum privacy loss budget of the three analyses. i.e., $\epsilon_{total}=\max(\epsilon_1,\epsilon_2,\epsilon_3)=1$. @fig-para-comp shows the application of sequential composition to our fictitious economic data set.
+
+### Post-processing theorem
+
+Another important theorem is the post-processing theorem that allows the continued use of formally private information without losing the privacy guarantee [@bun2016concentrated; @dwork2006calibrating; @nissim2007smooth]. In other words, if someone modifies a formally private data set or statistic without using additional information from the confidential data, then that data set or statistic is still formally private. For example, if the number of employees from a formally private method said there are 3.7 employees, then we could round that value to 4 without leaking more information. Simply put, the post-processing theorem makes the data usable after formally private noise is added.
+
+Post-processing also provides the opportunity to improve utility. Data stewards can use available public or expert knowledge to reduce the amount of noise without accruing additional privacy loss. The public information can come from data released without formal privacy or from individuals who are comfortable sharing their information without noise.
+
+::: {.callout-tip}
+## A key takeaway
+Formal privacy is transparent and allows users to account for the noise introduced into statistics. Post-processing can give up some of this transparency and make it more difficult to account for the noise added to statistics.
+:::
+
+<br>
+
+## Application: Laplace Mechanism
+
+To enhance our intuition, we are going to apply one of the most basic formally privacy algorithms, the Laplace mechanism. This mechanism satisfies DP.
+
+### Laplace Distribution
+
+As the name implies, the Laplace mechanism samples from the Laplace distribution. If you have not encountered the Laplace distribution, it may be helpful to compare it to a more common distribution: the normal distribution.
+
+- Like the normal distribution, the Laplace distribution has parameters for scale/spread (analogous to $\sigma$ in the normal distribution) and location (analogous to mean in the normal distribution).
+
+- We will only ever adjust the spread of the distribution; the location is always assumed to be centered at 0.
+
+```{r echo = FALSE}
+# package containing Laplace distribution
+library(smoothmest)
+
+# set seed for reproducibility
+set.seed(19042022)
+
+# plot comparison
+ggplot() + 
+  geom_function(fun = function(x) dnorm(x, 0, 1),
+                xlim = c(-5,5),
+                aes(color = 'Normal')) +
+  geom_function(fun = function(x) smoothmest::ddoublex(x, 0, 1),
+                 xlim = c(-5,5),
+                aes(color = 'Laplace')) +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        axis.title = element_blank(),
+        panel.grid.major = element_blank()) +
+  labs(title = 'Laplace vs. Normal Distributions',
+       color = 'Distribution')
+```
+
+
+<br>
+
+### Adding Noise
+
+![Laplace distribution.](images/laplace.PNG){#fig-lap-narrow width=600}
+
+To add differentially private noise to a single statistic using the Laplace distribution, we take one random sample from the distribution where:
+
+- the distribution is centered at 0 and 
+
+- the width of the distribution or the variability is based the ratio of the sensitivity, $\Delta$, of the target statistics over the privacy loss budget, $\epsilon$ (i.e., $\frac{\Delta}{\epsilon}$).
+
+The resulting noise is then added to the statistic in question.
+
+# Exercise 2
+
+In this exercise, we're going to conceptually practice applying the Laplace mechanism by imagining making draws from the Laplace distribution using varying values of sensitivity and $\epsilon$.
+
+<br> 
+
+::: {.panel-tabset}
+## Question 1
+
+Hold $\epsilon$ constant at 1 and adjust the sensitivity. What happens to the amount of noise added as the sensitivity goes up? What happens to the amount of noise added as the sensitivity goes down?
+
+<br>
+
+## Question 2
+
+Hold sensitivity constant at 1 and adjust the $\epsilon$. What happens to the amount of noise added as $\epsilon$ goes up? What happens to the amount of noise added as $\epsilon$ goes down?
+
+## Solution
+![Laplace distribution when the sensivitiy goes down or the privacy loss budget goes up.](images/laplace-narrow.PNG){#fig-lap-narrow width=600}
+![Laplace distribution when the sensivitiy goes up or the privacy loss budget goes down.](images/laplace-wide.PNG){#fig-ap-wide width=600}
+:::
+
+<br> <br>
+
+# Suggested Reading
+Bowen, CMK., Williams, A. R., & Pickens, M. 2021. "Decennial Disclosure: An Explainer on Formal Privacy and the TopDown Algorithm." *Urban Institute*. [link](https://www.urban.org/research/publication/decennial-disclosure)
+
+Williams, A. R., & Bowen, CMK. (2023). "The promise and limitations of formal privacy." *WIREs Computational Statistics*, e1615. [link](https://doi.org/10.1002/wics.1615)
+
+# References
