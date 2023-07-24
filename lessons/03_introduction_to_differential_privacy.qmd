@@ -269,7 +269,7 @@ In the formal privacy literature, privacy researchers often use the terms mechan
 
 In most of the cases we've discussed so far, the released data product is a full dataset. However, a spectrum of data products could be released by a data curator after applying privacy methods. Here are a list examples of possible data products that a data curator could release after applying SDC methods, roughly from most to least detailed:
 
-- mmicrodata (e.g., public use microdata series or PUMS) 
+- microdata (e.g., public use microdata series or PUMS) 
 - summary tables (e.g., American Community Survey tables) 
 - summary statistics (e.g., multiple statistics on income in a state) 
 - single statistics (e.g., maximum age in a county) 
@@ -508,37 +508,37 @@ ggplot() +
 
 ### Adding Noise
 
+![Laplace distribution.](images/laplace.PNG){#fig-lap-narrow width=600}
+
 To add differentially private noise to a single statistic using the Laplace distribution, we take one random sample from the distribution where:
 
 - the distribution is centered at 0 and 
 
-- the width of the distribution is the ratio of the sensitivity of the target statistics over the privacy loss budget, $\epsilon$.
+- the width of the distribution or the variability is based the ratio of the sensitivity, $\Delta$, of the target statistics over the privacy loss budget, $\epsilon$ (i.e., $\frac{\Delta}{\epsilon}$).
 
 The resulting noise is then added to the statistic in question.
 
 # Exercise 2
 
-In this exercise, we're going to practice applying the Laplace mechanism by drawing from the Laplace distribution using varying values of sensitivity and epsilon.
-
-Using the `laplace_mechanism()` function defined above (make sure you have run this code), vary the `epsilon` and `sensitivity` parameters. Some sample code is included below. Since we are not trying to reproduce these results, there is no need to set a seed.
-
-```{r eval = FALSE}
-# calculate noise
-laplace_mechanism(sensitivity = #_____,
-                  epsilon = #_____)
-```
+In this exercise, we're going to conceptually practice applying the Laplace mechanism by imagining making draws from the Laplace distribution using varying values of sensitivity and $\epsilon$.
 
 <br> 
 
+::: {.panel-tabset}
 ## Question 1
 
-Hold $\epsilon$ constant at 1 and adjust the sensitivity. What happens to the amount of noise added as the sensitivity goes up?
+Hold $\epsilon$ constant at 1 and adjust the sensitivity. What happens to the amount of noise added as the sensitivity goes up? What happens to the amount of noise added as the sensitivity goes down?
 
 <br>
 
 ## Question 2
 
-Hold sensitivity constant at 1 and adjust the $\epsilon$ What happens to the amount of noise added as epsilon goes up?
+Hold sensitivity constant at 1 and adjust the $\epsilon$. What happens to the amount of noise added as $\epsilon$ goes up? What happens to the amount of noise added as $\epsilon$ goes down?
+
+## Solution
+![Laplace distribution when the sensivitiy goes down or the privacy loss budget goes up.](images/laplace-narrow.PNG){#fig-lap-narrow width=600}
+![Laplace distribution when the sensivitiy goes up or the privacy loss budget goes down.](images/laplace-wide.PNG){#fig-ap-wide width=600}
+:::
 
 <br> <br>
 
